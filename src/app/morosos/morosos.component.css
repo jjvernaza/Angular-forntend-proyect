@@ -1,0 +1,290 @@
+/* Estilos generales */
+.p-6 {
+  padding: 1.5rem;
+}
+
+/* Estilos de texto */
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* Espaciado */
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+/* Flexbox y Grid */
+.flex {
+  display: flex;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.space-x-4 > * + * {
+  margin-left: 1rem;
+}
+
+.grid {
+  display: grid;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Formularios y botones */
+.border {
+  border-width: 1px;
+}
+
+.border-gray-300 {
+  border-color: rgb(209, 213, 219);
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.min-w-\[150px\] {
+  min-width: 150px;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.bg-green-600 {
+  background-color: #059669;
+}
+
+.bg-blue-500 {
+  background-color: #3b82f6;
+}
+
+.hover\:bg-green-700:hover {
+  background-color: #047857;
+}
+
+.hover\:bg-blue-600:hover {
+  background-color: #2563eb;
+}
+
+.text-white {
+  color: white;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Tablas */
+.min-w-full {
+  min-width: 100%;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.divide-y > * + * {
+  border-top-width: 1px;
+}
+
+.divide-gray-200 > * + * {
+  border-color: rgb(229, 231, 235);
+}
+
+.hover\:bg-gray-50:hover {
+  background-color: rgb(249, 250, 251);
+}
+
+/* Tarjetas y contenedores */
+.bg-white {
+  background-color: white;
+}
+
+.bg-gray-100 {
+  background-color: rgb(243, 244, 246);
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.p-8 {
+  padding: 2rem;
+}
+
+.border-l-4 {
+  border-left-width: 4px;
+}
+
+.border-red-500 {
+  border-color: #ef4444;
+}
+
+.border-orange-500 {
+  border-color: #f97316;
+}
+
+.border-blue-500 {
+  border-color: #3b82f6;
+}
+
+/* Colores de texto para estados */
+.text-gray-500 {
+  color: rgb(107, 114, 128);
+}
+
+.text-gray-600 {
+  color: rgb(75, 85, 99);
+}
+
+.text-gray-900 {
+  color: rgb(17, 24, 39);
+}
+
+.text-yellow-600 {
+  color: #ca8a04;
+}
+
+.text-orange-600 {
+  color: #ea580c;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+/* Animaciones */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tamaños */
+.h-12 {
+  height: 3rem;
+}
+
+.w-12 {
+  width: 3rem;
+}
+
+.h-5 {
+  height: 1.25rem;
+}
+
+.w-5 {
+  width: 1.25rem;
+}

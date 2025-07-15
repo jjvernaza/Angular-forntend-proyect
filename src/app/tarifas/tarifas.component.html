@@ -1,0 +1,157 @@
+<div class="p-6">
+    <h1 class="text-3xl font-bold mb-6">Administración de Tarifas</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Formulario -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">
+          {{ modoEdicion ? 'Editar Tarifa' : 'Nueva Tarifa' }}
+        </h2>
+        
+        <form [formGroup]="tarifaForm" (ngSubmit)="guardarTarifa()">
+          <div class="mb-4">
+            <label for="valor" class="block text-sm font-medium text-gray-700 mb-1">Valor de la Tarifa</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+              <input 
+                type="number" 
+                id="valor" 
+                formControlName="valor" 
+                class="w-full border border-gray-300 rounded-md p-2 pl-8"
+                min="0"
+                step="0.01"
+                [ngClass]="{'border-red-500': submitted && f['valor'].errors}"
+              >
+            </div>
+            <div *ngIf="submitted && f['valor'].errors" class="text-red-500 text-sm mt-1">
+              <div *ngIf="f['valor'].errors['required']">El valor es obligatorio</div>
+              <div *ngIf="f['valor'].errors['min']">El valor debe ser mayor a 0</div>
+            </div>
+            
+            <div class="mt-2 text-sm text-gray-500">
+              Ingrese el valor mensual a cobrar por el servicio.
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button 
+              type="button" 
+              (click)="cancelarEdicion()" 
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+              [disabled]="isSubmitting"
+            >
+              <span *ngIf="!isSubmitting">{{ modoEdicion ? 'Actualizar' : 'Guardar' }}</span>
+              <span *ngIf="isSubmitting">
+                <svg class="animate-spin h-5 w-5 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Procesando...
+              </span>
+            </button>
+          </div>
+        </form>
+        
+        <!-- Mensajes de respuesta -->
+        <div *ngIf="successMessage" class="mt-4 p-3 bg-green-100 text-green-700 rounded-md">
+          {{ successMessage }}
+        </div>
+        <div *ngIf="errorMessage" class="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {{ errorMessage }}
+        </div>
+      </div>
+      
+      <!-- Lista de tarifas -->
+      <div class="md:col-span-2 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Tarifas Disponibles</h2>
+        
+        <!-- Estado de carga -->
+        <div *ngIf="isLoading" class="flex justify-center my-8">
+          <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        
+        <!-- Tabla de tarifas -->
+        <div *ngIf="!isLoading" class="overflow-x-auto">
+          <table *ngIf="tarifas.length > 0" class="min-w-full border-collapse">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let tarifa of tarifas" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ tarifa.id }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {{ tarifa.valor | currency }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button 
+                    (click)="editarTarifa(tarifa)" 
+                    class="text-blue-600 hover:text-blue-900 mr-3"
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    (click)="confirmarEliminar(tarifa)" 
+                    class="text-red-600 hover:text-red-900"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <!-- Mensaje cuando no hay tarifas -->
+          <div *ngIf="tarifas.length === 0" class="text-center py-8 text-gray-500">
+            No hay tarifas registradas. Añade una nueva para comenzar.
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal de confirmación de eliminación -->
+    <div *ngIf="showConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg max-w-md w-full p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Confirmar Eliminación</h3>
+        <p class="text-gray-500 mb-6">
+          ¿Estás seguro de que deseas eliminar la tarifa de <span class="font-semibold">{{ tarifaAEliminar?.valor | currency }}</span>?
+          <br>
+          <span *ngIf="hasError" class="text-red-500">
+            Esta acción no se puede deshacer.
+          </span>
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button 
+            (click)="cancelarEliminacion()" 
+            class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+          >
+            Cancelar
+          </button>
+          <button 
+            (click)="eliminarTarifa()" 
+            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
+            [disabled]="isDeletingTarifa"
+          >
+            <span *ngIf="!isDeletingTarifa">Eliminar</span>
+            <span *ngIf="isDeletingTarifa">Eliminando...</span>
+          </button>
+        </div>
+        
+        <div *ngIf="hasError" class="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {{ errorMessage }}
+        </div>
+      </div>
+    </div>
+  </div>

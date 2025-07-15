@@ -1,0 +1,180 @@
+<div class="p-6 max-w-xl mx-auto">
+  <h1 class="text-4xl font-bold mb-6">Crear Usuario</h1>
+  
+  <form [formGroup]="usuarioForm" (ngSubmit)="crearUsuario()" class="bg-white shadow-md rounded-lg p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+        <input 
+          id="nombre" 
+          formControlName="Nombre" 
+          type="text" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('Nombre')}"
+        >
+        <p *ngIf="getFormErrors('Nombre')" class="text-red-500 text-xs mt-1">
+          Nombre es obligatorio
+        </p>
+      </div>
+      
+      <div>
+        <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+        <input 
+          id="apellidos" 
+          formControlName="Apellidos" 
+          type="text" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('Apellidos')}"
+        >
+        <p *ngIf="getFormErrors('Apellidos')" class="text-red-500 text-xs mt-1">
+          Apellidos es obligatorio
+        </p>
+      </div>
+      
+      <div>
+        <label for="cedula" class="block text-sm font-medium text-gray-700">Cédula</label>
+        <input 
+          id="cedula" 
+          formControlName="Cedula" 
+          type="text" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('Cedula')}"
+        >
+        <p *ngIf="getFormErrors('Cedula')" class="text-red-500 text-xs mt-1">
+          Cédula es obligatoria y solo debe contener números
+        </p>
+      </div>
+      
+      <div>
+        <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+        <input 
+          id="telefono" 
+          formControlName="Telefono" 
+          type="text" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('Telefono')}"
+        >
+        <p *ngIf="getFormErrors('Telefono')" class="text-red-500 text-xs mt-1">
+          Teléfono es obligatorio y solo debe contener números
+        </p>
+      </div>
+      
+      <div>
+        <label for="funcion" class="block text-sm font-medium text-gray-700">Función/Rol</label>
+        <select 
+          id="funcion" 
+          formControlName="Funcion" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('Funcion')}"
+        >
+          <option value="" disabled>Seleccione una función</option>
+          <option value="Administrador">Administrador</option>
+          <option value="Operador">Operador</option>
+          <option value="Técnico">Técnico</option>
+          <option value="Contador">Contador</option>
+          <option value="Vendedor">Vendedor</option>
+        </select>
+        <p *ngIf="getFormErrors('Funcion')" class="text-red-500 text-xs mt-1">
+          Función es obligatoria
+        </p>
+      </div>
+      
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
+        <input 
+          id="username" 
+          formControlName="User" 
+          type="text" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('User')}"
+        >
+        <p *ngIf="getFormErrors('User')" class="text-red-500 text-xs mt-1">
+          Nombre de usuario es obligatorio
+        </p>
+      </div>
+      
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+        <input 
+          id="password" 
+          formControlName="Password" 
+          type="password" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('Password')}"
+        >
+        <p *ngIf="getFormErrors('Password')" class="text-red-500 text-xs mt-1">
+          Contraseña es obligatoria y debe tener al menos 6 caracteres
+        </p>
+      </div>
+      
+      <div>
+        <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+        <select 
+          id="estado" 
+          formControlName="estado_id" 
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+          [ngClass]="{'border-red-500': getFormErrors('estado_id')}"
+        >
+          <option value="" disabled>Seleccione un estado</option>
+          <option *ngFor="let estado of estados" [value]="estado.ID">
+            {{ estado.Estado }}
+          </option>
+        </select>
+        <p *ngIf="getFormErrors('estado_id')" class="text-red-500 text-xs mt-1">
+          Estado es obligatorio
+        </p>
+      </div>
+    </div>
+    
+    <!-- Sección de permisos -->
+    <div class="mt-6">
+      <h3 class="text-lg font-medium text-gray-700 mb-3">Permisos de Usuario</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div *ngFor="let permiso of permisos" class="flex items-center">
+          <input 
+            type="checkbox"
+            [id]="'permiso_' + permiso.id"
+            [value]="permiso.id"
+            (change)="togglePermiso(permiso.id)"
+            class="h-4 w-4 text-blue-600 border-gray-300 rounded"
+          >
+          <label [for]="'permiso_' + permiso.id" class="ml-2 block text-sm text-gray-900">
+            {{ permiso.nombre }}
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-6 flex justify-end space-x-3">
+      <button 
+        type="button" 
+        class="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+        (click)="resetForm()"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        [disabled]="usuarioForm.invalid || isSubmitting"
+      >
+        {{ isSubmitting ? 'Creando...' : 'Crear Usuario' }}
+      </button>
+    </div>
+  </form>
+  
+  <!-- Mensajes de alerta -->
+  <div *ngIf="successMessage" class="mt-4 p-3 bg-green-100 text-green-700 rounded-md flex items-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+    </svg>
+    {{ successMessage }}
+  </div>
+  
+  <div *ngIf="errorMessage" class="mt-4 p-3 bg-red-100 text-red-700 rounded-md flex items-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+    </svg>
+    {{ errorMessage }}
+  </div>
+</div>

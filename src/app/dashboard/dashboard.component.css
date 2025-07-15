@@ -1,0 +1,80 @@
+/* dashboard.component.css */
+.chart-container {
+  position: relative;
+  margin: auto;
+  height: 250px;
+  width: 100%;
+}
+
+.border-green-500 {
+  border-left-color: #48bb78;
+}
+
+.border-blue-500 {
+  border-left-color: #4299e1;
+}
+
+.border-yellow-500 {
+  border-left-color: #ecc94b;
+}
+
+.border-purple-500 {
+  border-left-color: #9f7aea;
+}
+
+.bg-white {
+  background-color: #ffffff;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.bg-blue-500 {
+  background-color: #4299e1;
+}
+
+.hover\:bg-blue-600:hover {
+  background-color: #3182ce;
+}
+
+.bg-gray-200 {
+  background-color: #edf2f7;
+}
+
+.hover\:bg-gray-300:hover {
+  background-color: #e2e8f0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.bg-gray-100 {
+  background-color: #f7fafc;
+}
+
+canvas {
+  max-height: 100%;
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
