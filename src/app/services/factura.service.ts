@@ -31,18 +31,18 @@ export class FacturaService {
   }
 
   // Generar factura por pagar
-  generarFacturaPorPagar(cliente: any, mesesDebidos: number, tarifa: any): void {
+  generarFacturaPorPagar(cliente: any, mesesDebidos: number, tarifa: any, ultimoMesPagado?: { mes: number, ano: number }): void {
     // Verificar que pdfMake está disponible
     if (typeof pdfMake === 'undefined') {
       console.error('pdfMake no está cargado. Intentando cargar scripts...');
       this.cargarScriptsPdfMake();
-      setTimeout(() => this.generarFacturaPorPagar(cliente, mesesDebidos, tarifa), 1000);
+      setTimeout(() => this.generarFacturaPorPagar(cliente, mesesDebidos, tarifa, ultimoMesPagado), 1000);
       return;
     }
 
     try {
       const montoTotal = tarifa.valor * mesesDebidos;
-      const docDefinition = this.crearDefinicionFacturaPorPagar(cliente, tarifa, mesesDebidos, montoTotal);
+      const docDefinition = this.crearDefinicionFacturaPorPagar(cliente, tarifa, mesesDebidos, montoTotal, ultimoMesPagado);
       this.generarYDescargarPDF(docDefinition, `Factura_${cliente.ID}_por_pagar.pdf`);
     } catch (error) {
       console.error('Error al generar factura por pagar:', error);
@@ -73,7 +73,8 @@ export class FacturaService {
     cliente: any, 
     tarifa: any, 
     mesesDebidos: number,
-    montoTotal: number
+    montoTotal: number,
+    ultimoMesPagado?: { mes: number, ano: number }
   ): any {
     const fecha = new Date();
     const numeroFactura = `INV-${Math.floor(Math.random() * 10000)}`;
@@ -155,7 +156,7 @@ export class FacturaService {
         
         // Detalle de meses adeudados
         {
-          text: `Meses adeudados: ${this.generarDetalleMesesAdeudados(mesesDebidos)}`,
+          text: `Meses adeudados: ${this.generarDetalleMesesAdeudados(mesesDebidos, ultimoMesPagado)}`,
           style: 'debtInfo',
           margin: [0, 10, 0, 10]
         },
@@ -559,37 +560,41 @@ export class FacturaService {
   }
 
   // Generar detalle de meses adeudados
-  private generarDetalleMesesAdeudados(mesesDebidos: number): string {
+  private generarDetalleMesesAdeudados(mesesDebidos: number, ultimoMesPagado?: { mes: number, ano: number }): string {
     if (mesesDebidos <= 0) return 'Ninguno';
-    
+
+    // Obtener mes y año iniciales (ultimoMesPagado o mes actual por defecto)
     const fecha = new Date();
-    const mesActual = fecha.getMonth();
-    const anoActual = fecha.getFullYear();
+    let mes = ultimoMesPagado ? ultimoMesPagado.mes + 1 : fecha.getMonth() + 1; // +1 para el mes siguiente
+    let ano = ultimoMesPagado ? ultimoMesPagado.ano : fecha.getFullYear();
     
-    let mesesTexto = [];
-    let mes = mesActual;
-    let ano = anoActual;
-    
-    // Limitar a 6 meses para evitar problemas con listas demasiado largas
-    const mesesAMostrar = Math.min(mesesDebidos, 6);
-    
-    // Retroceder mesesDebidos meses desde el mes actual
-    for (let i = 0; i < mesesAMostrar; i++) {
-      mes--;
-      if (mes < 0) {
-        mes = 11; // diciembre
-        ano--;
-      }
-      mesesTexto.push(`${this.obtenerNombreMes(mes)} ${ano}`);
+    // Si el mes inicial es 12 (diciembre), ajustar al siguiente año
+    if (mes > 11) {
+      mes = 0; // Enero
+      ano++;
     }
-    
+
+    let mesesTexto = [];
+    // Limitar a 6 meses para evitar listas demasiado largas
+    const mesesAMostrar = Math.min(mesesDebidos, 6);
+
+    // Calcular meses adeudados hacia adelante
+    for (let i = 0; i < mesesAMostrar; i++) {
+      mesesTexto.push(`${this.obtenerNombreMes(mes)} ${ano}`);
+      mes++;
+      if (mes > 11) {
+        mes = 0; // Enero
+        ano++;
+      }
+    }
+
     // Si hay más meses de los que mostramos, indicarlo
     if (mesesDebidos > mesesAMostrar) {
       mesesTexto.push(`y ${mesesDebidos - mesesAMostrar} más`);
     }
-    
-    // Invertir para mostrar el orden cronológico (más antiguos primero)
-    return mesesTexto.reverse().join(', ');
+
+    // Unir los meses en una cadena (sin invertir, ya están en orden cronológico)
+    return mesesTexto.join(', ');
   }
 
   // Obtener el método de pago basado en el ID

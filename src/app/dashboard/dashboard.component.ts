@@ -10,6 +10,13 @@ interface MonthlyIncomeItem {
   total: number;
 }
 
+interface ExpectedIncomeItem {
+  mes: string;
+  anio: number;
+  totalEsperado: number;
+  cantidadClientes: number;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -18,21 +25,34 @@ interface MonthlyIncomeItem {
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  // Define los gráficos con tipo 'any' para evitar problemas de tipado
   public clientChart: any = null;
   public incomeChart: any = null;
   public serviceChart: any = null;
   public sectorChart: any = null;
   
-  // Datos para gráficos y tabla
   public dashboardStats: any = null;
   public monthlyIncomeData: MonthlyIncomeItem[] = [];
+  public expectedIncomeData: ExpectedIncomeItem[] = [];
   
-  // Selectores de año
   public availableYears: number[] = [2024, 2025];
   public selectedYear: number = new Date().getFullYear();
   
   private subscriptions: Subscription = new Subscription();
+
+  private monthNamesES: { [key: string]: string } = {
+    'ENERO': 'Enero',
+    'FEBRERO': 'Febrero',
+    'MARZO': 'Marzo',
+    'ABRIL': 'Abril',
+    'MAYO': 'Mayo',
+    'JUNIO': 'Junio',
+    'JULIO': 'Julio',
+    'AGOSTO': 'Agosto',
+    'SEPTIEMBRE': 'Septiembre',
+    'OCTUBRE': 'Octubre',
+    'NOVIEMBRE': 'Noviembre',
+    'DICIEMBRE': 'Diciembre'
+  };
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -46,10 +66,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Limpiar todas las suscripciones al destruir el componente
     this.subscriptions.unsubscribe();
     
-    // Destruir los gráficos para evitar memory leaks
     if (this.clientChart) this.clientChart.destroy();
     if (this.incomeChart) this.incomeChart.destroy();
     if (this.serviceChart) this.serviceChart.destroy();
@@ -57,17 +75,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadDashboardData(): void {
-    // Cargar estadísticas generales del dashboard
     const statsSub = this.apiService.getDashboardStats().subscribe({
       next: (data: any) => {
         this.dashboardStats = data;
         console.log('Dashboard stats:', data);
         
-        // Inicializar gráficos de clientes, tipos de servicio y sectores
+        if (data.pagos?.ultimosDosMeses) {
+          this.monthlyIncomeData = data.pagos.ultimosDosMeses.map((item: any) => ({
+            mes: this.formatMonth(item.mes),
+            anio: item.anio,
+            total: parseFloat(item.total || 0)
+          }));
+        }
+        
+        if (data.pagos?.esperados) {
+          this.expectedIncomeData = data.pagos.esperados.map((item: any) => ({
+            mes: this.formatMonth(item.mes),
+            anio: item.anio,
+            totalEsperado: parseFloat(item.totalEsperado || 0),
+            cantidadClientes: item.cantidadClientes || 0
+          }));
+        }
+        
         setTimeout(() => {
           this.initializeClientChart();
           this.initializeServiceChart();
           this.initializeSectorChart();
+          this.initializeIncomeChart();
         }, 300);
       },
       error: (error: any) => {
@@ -76,55 +110,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     
     this.subscriptions.add(statsSub);
-    
-    // Cargar datos de ingresos mensuales por año seleccionado
-    this.loadIncomeDataByYear(this.selectedYear);
-  }
-  
-  loadIncomeDataByYear(year: number): void {
-    this.selectedYear = year;
-    
-    // Limpiar gráfico anterior si existe
-    if (this.incomeChart) {
-      this.incomeChart.destroy();
-      this.incomeChart = null;
-    }
-    
-    // Usar el método específico para cargar ingresos por año
-    const incomeSub = this.apiService.getMonthlyIncome(year).subscribe({
-      next: (data: any[]) => {
-        console.log(`Ingresos mensuales para ${year}:`, data);
-        
-        // Procesar datos para gráfico y tabla
-        this.monthlyIncomeData = data.map((item: any) => ({
-          mes: this.formatMonth(item.Mes),
-          anio: item.anio,
-          total: parseFloat(item.total || 0)
-        }));
-        
-        // Inicializar gráfico de ingresos
-        setTimeout(() => {
-          this.initializeIncomeChart();
-        }, 300);
-      },
-      error: (error: any) => {
-        console.error(`Error al cargar ingresos para el año ${year}:`, error);
-        // En caso de error, usar datos de ejemplo
-        this.monthlyIncomeData = this.generateSampleMonthlyData(year);
-        setTimeout(() => {
-          this.initializeIncomeChart();
-        }, 300);
-      }
-    });
-    
-    this.subscriptions.add(incomeSub);
   }
 
   initializeClientChart(): void {
     const clientChartCanvas = document.getElementById('clientChartCanvas') as HTMLCanvasElement;
     if (!clientChartCanvas) return;
     
-    // Crear datos por defecto si no hay datos disponibles
     const clientData = this.dashboardStats?.clientes || { total: 0, activos: 0, suspendidos: 0, retirados: 0 };
     
     this.clientChart = new Chart(clientChartCanvas, {
@@ -139,7 +130,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
               clientData.suspendidos || 0, 
               clientData.retirados || 0
             ],
-            backgroundColor: ['#2196F3', '#FFC107', '#F44336']
+            backgroundColor: ['#22c55e', '#ff8800', '#c42121']
           }
         ]
       },
@@ -163,20 +154,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const incomeChartCanvas = document.getElementById('incomeChartCanvas') as HTMLCanvasElement;
     if (!incomeChartCanvas) return;
     
-    // Asegurarse de que hay datos, o usar datos vacíos
-    let meses = [];
-    let montos = [];
+    let meses: string[] = [];
+    let ingresosReales: number[] = [];
+    let ingresosEsperados: number[] = [];
     
     if (this.monthlyIncomeData && this.monthlyIncomeData.length > 0) {
-      meses = this.monthlyIncomeData.map(item => item.mes);
-      montos = this.monthlyIncomeData.map(item => item.total);
+      meses = this.monthlyIncomeData.map((item: MonthlyIncomeItem) => item.mes);
+      ingresosReales = this.monthlyIncomeData.map((item: MonthlyIncomeItem) => item.total);
+      ingresosEsperados = this.expectedIncomeData.map((item: ExpectedIncomeItem) => item.totalEsperado);
     } else {
       const monthNames = [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
       ];
       meses = monthNames;
-      montos = Array(12).fill(0);
+      ingresosReales = Array(12).fill(0);
+      ingresosEsperados = Array(12).fill(0);
     }
 
     this.incomeChart = new Chart(incomeChartCanvas, {
@@ -185,9 +178,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
         labels: meses,
         datasets: [
           {
-            label: 'Ingresos por mes',
-            data: montos,
+            label: 'Ingresos Reales',
+            data: ingresosReales,
             backgroundColor: '#2196F3'
+          },
+          {
+            label: 'Ingresos Esperados',
+            data: ingresosEsperados,
+            backgroundColor: '#4CAF50'
           }
         ]
       },
@@ -200,7 +198,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             text: `Ingresos Mensuales ${this.selectedYear}`
           },
           legend: {
-            display: false
+            position: 'top'
           }
         },
         scales: {
@@ -220,11 +218,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const serviceChartCanvas = document.getElementById('serviceChartCanvas') as HTMLCanvasElement;
     if (!serviceChartCanvas) return;
     
-    // Datos por defecto si no hay datos disponibles
     let tiposServicio = ['Sin datos'];
     let cantidadPorServicio = [1];
     
-    // Usar datos reales si están disponibles
     if (this.dashboardStats?.servicios && this.dashboardStats.servicios.length > 0) {
       tiposServicio = this.dashboardStats.servicios.map((s: any) => s.tipo);
       cantidadPorServicio = this.dashboardStats.servicios.map((s: any) => s.cantidad);
@@ -264,11 +260,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const sectorChartCanvas = document.getElementById('sectorChartCanvas') as HTMLCanvasElement;
     if (!sectorChartCanvas) return;
     
-    // Datos por defecto si no hay datos disponibles
     let nombresSectores = ['Sin datos'];
     let cantidadPorSector = [0];
     
-    // Usar datos reales si están disponibles
     if (this.dashboardStats?.sectores && this.dashboardStats.sectores.length > 0) {
       nombresSectores = this.dashboardStats.sectores.map((s: any) => s.sector || 'Sin nombre');
       cantidadPorSector = this.dashboardStats.sectores.map((s: any) => s.cantidad || 0);
@@ -311,21 +305,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Generar datos de ejemplo para meses
-  generateSampleMonthlyData(year: number): MonthlyIncomeItem[] {
-    const monthNames = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-    
-    return monthNames.map((mes, index) => ({
-      mes: mes,
-      anio: year,
-      total: Math.floor(Math.random() * 5000) + 500
-    }));
-  }
-
-  // Método para manejar la descarga de datos de ingresos (CSV)
   downloadData(): void {
     if (!this.monthlyIncomeData.length) {
       alert('No hay datos disponibles para descargar');
@@ -333,25 +312,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     
     try {
-      // Crear contenido CSV
       let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Mes,Año,Ingresos\n";
+      csvContent += "Mes,Año,Ingresos Reales,Ingresos Esperados\n";
       
-      this.monthlyIncomeData.forEach(item => {
-        csvContent += `${item.mes},${item.anio},${item.total}\n`;
-      });
+      for (let i = 0; i < this.monthlyIncomeData.length; i++) {
+        const item = this.monthlyIncomeData[i];
+        const esperadoItem = this.expectedIncomeData[i];
+        const esperado = esperadoItem ? esperadoItem.totalEsperado : 0;
+        csvContent += `${item.mes},${item.anio},${item.total},${esperado}\n`;
+      }
       
-      // Crear elemento de enlace para descargar
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
       link.setAttribute("download", `ingresos_mensuales_${this.selectedYear}.csv`);
       document.body.appendChild(link);
-      
-      // Descargar el archivo
       link.click();
-      
-      // Limpiar
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error al descargar datos:', error);
@@ -359,7 +335,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Método para descargar Excel de todos los clientes
   downloadClientsExcel(): void {
     console.log('Iniciando descarga de Excel...');
     
@@ -367,23 +342,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (blob: Blob) => {
         console.log('Excel recibido, creando descarga...');
         
-        // Crear URL del blob
         const url = window.URL.createObjectURL(blob);
-        
-        // Crear elemento de enlace para descarga
         const link = document.createElement('a');
         link.href = url;
         
-        // Generar nombre del archivo con fecha actual
         const fechaActual = new Date().toISOString().split('T')[0];
         link.download = `clientes_vozipcompany_${fechaActual}.xlsx`;
         
-        // Agregar al DOM, hacer clic y limpiar
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        // Limpiar URL del objeto
         window.URL.revokeObjectURL(url);
         
         console.log('✅ Descarga de Excel completada');
@@ -396,37 +365,48 @@ export class DashboardComponent implements OnInit, OnDestroy {
     
     this.subscriptions.add(excelSub);
   }
+
+  downloadReporteClientesPagos(): void {
+    console.log(`📥 Descargando reporte de pagos del año ${this.selectedYear}...`);
+    
+    const reportSub = this.apiService.exportClientesPagosExcel(this.selectedYear).subscribe({
+      next: (blob: Blob) => {
+        console.log('✅ Excel recibido, creando descarga...');
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `reporte_clientes_pagos_${this.selectedYear}.xlsx`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        
+        console.log('✅ Descarga completada');
+      },
+      error: (error: any) => {
+        console.error('❌ Error al descargar reporte:', error);
+        alert('Error al generar el reporte. Por favor, intenta nuevamente.');
+      }
+    });
+    
+    this.subscriptions.add(reportSub);
+  }
   
-  // Cambiar el año seleccionado
   changeYear(year: number): void {
     if (this.selectedYear !== year) {
-      this.loadIncomeDataByYear(year);
+      this.selectedYear = year;
+      this.loadDashboardData();
     }
   }
   
-  // Formatear el nombre del mes (de uppercase a formato título)
   formatMonth(mesUpperCase: string): string {
     if (!mesUpperCase) return '';
-    
-    const monthNames: { [key: string]: string } = {
-      'JANUARY': 'Enero',
-      'FEBRUARY': 'Febrero',
-      'MARCH': 'Marzo',
-      'APRIL': 'Abril',
-      'MAY': 'Mayo',
-      'JUNE': 'Junio',
-      'JULY': 'Julio',
-      'AUGUST': 'Agosto',
-      'SEPTEMBER': 'Septiembre',
-      'OCTOBER': 'Octubre',
-      'NOVEMBER': 'Noviembre',
-      'DECEMBER': 'Diciembre'
-    };
-    
-    return monthNames[mesUpperCase] || mesUpperCase.charAt(0) + mesUpperCase.slice(1).toLowerCase();
+    return this.monthNamesES[mesUpperCase] || mesUpperCase.charAt(0) + mesUpperCase.slice(1).toLowerCase();
   }
   
-  // Formatear montos para mostrarlos en la tabla
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('es-CO', { 
       style: 'currency', 
@@ -434,5 +414,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount || 0);
+  }
+
+  getEstadoCount(estadoNombre: string): number {
+    if (!this.dashboardStats?.debug?.estadosEncontrados) {
+      return 0;
+    }
+    
+    const estado = this.dashboardStats.debug.estadosEncontrados.find(
+      (e: any) => e.nombre?.toLowerCase() === estadoNombre.toLowerCase()
+    );
+    
+    return estado ? estado.cantidad : 0;
+  }
+  
+  getDiferencia(mes: string): number {
+    const real = this.monthlyIncomeData.find((item: MonthlyIncomeItem) => item.mes === mes);
+    const esperado = this.expectedIncomeData.find((item: ExpectedIncomeItem) => item.mes === mes);
+    
+    if (!real || !esperado) return 0;
+    
+    return real.total - esperado.totalEsperado;
+  }
+  
+  getPorcentajeCumplimiento(mes: string): number {
+    const real = this.monthlyIncomeData.find((item: MonthlyIncomeItem) => item.mes === mes);
+    const esperado = this.expectedIncomeData.find((item: ExpectedIncomeItem) => item.mes === mes);
+    
+    if (!real || !esperado || esperado.totalEsperado === 0) return 0;
+    
+    return (real.total / esperado.totalEsperado) * 100;
   }
 }

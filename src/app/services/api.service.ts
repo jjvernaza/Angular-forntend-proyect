@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -10,154 +11,180 @@ export class ApiService {
   
   constructor(private http: HttpClient) {}
   
+  // Set headers for JSON content
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+  }
+  
+  // Handle errors?
+  private handleError(error: any): Observable<never> {
+    console.error('API Error:', error);
+    return throwError(() => ({
+      status: error.status,
+      message: error.error?.message || 'Error desconocido en el servidor',
+      error
+    }));
+  }
+  
   // ===== CLIENTES =====
   
-  // ✅ Obtener todos los clientes
   getClientes(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/all`);
+    return this.http.get(`${this.baseUrl}/all`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // ✅ Agregar un nuevo cliente (actualizado con nuevos campos)
   addCliente(cliente: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/create`, cliente);
+    return this.http.post(`${this.baseUrl}/create`, cliente, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // ✅ Editar un cliente por ID
   updateCliente(id: number, cliente: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/update/${id}`, cliente);
+    return this.http.put(`${this.baseUrl}/update/${id}`, cliente, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // ✅ Eliminar un cliente por ID
   deleteCliente(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/delete/${id}`);
+    return this.http.delete(`${this.baseUrl}/delete/${id}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // ✅ Obtener clientes morosos
   getMorosos(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/morosos`);
+    return this.http.get(`${this.baseUrl}/morosos`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // Obtener morosos por meses
   getMorososPorMeses(meses: number): Observable<any> {
-    return this.http.get(`http://localhost:3000/api/clientes/morosos?meses=${meses}`);
+    return this.http.get(`${this.baseUrl}/morosos?meses=${meses}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
   // ===== TIPOS DE SERVICIO =====
   
-  // ✅ Obtener los tipos de servicio
   getTiposServicio(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/servicios/tipos');
+    return this.http.get<any[]>('http://localhost:3000/api/servicios/tipos', { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Crear tipo de servicio
   createTipoServicio(tipoServicio: any): Observable<any> {
-    return this.http.post('http://localhost:3000/api/servicios/create', tipoServicio);
+    return this.http.post('http://localhost:3000/api/servicios/create', tipoServicio, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Actualizar tipo de servicio
   updateTipoServicio(id: number, tipoServicio: any): Observable<any> {
-    return this.http.put(`http://localhost:3000/api/servicios/update/${id}`, tipoServicio);
+    return this.http.put(`http://localhost:3000/api/servicios/update/${id}`, tipoServicio, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Eliminar tipo de servicio
   deleteTipoServicio(id: number): Observable<any> {
-    return this.http.delete(`http://localhost:3000/api/servicios/delete/${id}`);
+    return this.http.delete(`http://localhost:3000/api/servicios/delete/${id}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
   // ===== ESTADOS =====
   
-  // ✅ Obtener estados
   getEstados(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/estados/all');
+    return this.http.get<any[]>('http://localhost:3000/api/estados/all', { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Crear estado
   createEstado(estado: any): Observable<any> {
-    return this.http.post('http://localhost:3000/api/estados/create', estado);
+    return this.http.post('http://localhost:3000/api/estados/create', estado, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Actualizar estado
   updateEstado(id: number, estado: any): Observable<any> {
-    return this.http.put(`http://localhost:3000/api/estados/update/${id}`, estado);
+    return this.http.put(`http://localhost:3000/api/estados/update/${id}`, estado, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Eliminar estado
   deleteEstado(id: number): Observable<any> {
-    return this.http.delete(`http://localhost:3000/api/estados/delete/${id}`);
+    return this.http.delete(`http://localhost:3000/api/estados/delete/${id}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
   // ===== PLANES =====
 
-  // ✅ Obtener planes MB
   getPlanes(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/planes/all');
+    return this.http.get<any[]>('http://localhost:3000/api/planes/all', { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
   // ===== SECTORES =====
 
-  // ✅ Obtener sectores
   getSectores(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/sectores/all');
+    return this.http.get<any[]>('http://localhost:3000/api/sectores/all', { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
   // ===== TARIFAS =====
 
-  // ✅ Obtener tarifas
   getTarifas(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/tarifas/all');
+    return this.http.get<any[]>('http://localhost:3000/api/tarifas/all', { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
   // ===== PAGOS =====
   
-  // ✅ Obtener pagos de un cliente con opción de filtrar por año
   getPagosCliente(clienteID: number, ano?: number): Observable<any> {
     let url = `http://localhost:3000/api/pagos/cliente/${clienteID}`;
     if (ano) {
       url += `?ano=${ano}`;
     }
-    return this.http.get(url);
+    return this.http.get(url, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // ✅ Agregar un pago
   addPago(pago: any): Observable<any> {
-    return this.http.post(`http://localhost:3000/api/pagos/add`, pago);
+    return this.http.post(`http://localhost:3000/api/pagos/add`, pago, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // ✅ Obtener métodos de pago
   getMetodosPago(): Observable<any> {
-    return this.http.get(`http://localhost:3000/api/metodos-pago/all`);
+    return this.http.get(`http://localhost:3000/api/metodos-pago/all`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
   // ===== ESTADÍSTICAS Y DASHBOARD =====
   
-  // Nuevos métodos para estadísticas del dashboard
   getDashboardStats(): Observable<any> {
-    return this.http.get(`http://localhost:3000/api/servicios/dashboard`);
+    return this.http.get(`http://localhost:3000/api/servicios/dashboard`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // Método para obtener ingresos mensuales
   getMonthlyIncome(year: number): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/api/pagos/ingresos-mensuales?anio=${year}`);
+    return this.http.get<any[]>(`http://localhost:3000/api/pagos/ingresos-mensuales?anio=${year}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
   
-  // Método para obtener la tarifa por ID de cliente
   getTarifaByClienteId(clienteId: number): Observable<any> {
-    return this.http.get<any>(`http://localhost:3000/api/tarifas/cliente/${clienteId}`);
+    return this.http.get<any>(`http://localhost:3000/api/tarifas/cliente/${clienteId}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
-
-  // Agregar este método en tu ApiService
 
   exportClientsToExcel(): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/export/excel`, {
+      headers: this.getHeaders(),
       responseType: 'blob'
-   });
+    }).pipe(catchError(this.handleError));
   }
 
   exportClientsMorososToExcel(meses: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/morosos/excel?meses=${meses}`, {
+      headers: this.getHeaders(),
       responseType: 'blob'
-    });
+    }).pipe(catchError(this.handleError));
   }
-  
-  
+
+  // ===== REPORTES =====
+
+exportClientesPagosExcel(ano: number): Observable<Blob> {
+  return this.http.get(`http://localhost:3000/api/pagos/reporte-clientes-pagos?ano=${ano}`, {
+    headers: this.getHeaders(),
+    responseType: 'blob'
+  }).pipe(catchError(this.handleError));
 }
+}
+

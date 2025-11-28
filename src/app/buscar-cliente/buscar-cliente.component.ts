@@ -39,11 +39,12 @@ export class BuscarClienteComponent implements OnInit {
   cargarClientes(): void {
     this.apiService.getClientes().subscribe(
       (data: any) => {
-        console.log('Datos de clientes recibidos:', data); // Para debugging
+        console.log('Datos de clientes recibidos:', data);
         this.clientes = data;
       },
       (error) => {
         console.error('Error al obtener clientes:', error);
+        alert('Error al cargar clientes: ' + (error.error?.message || 'Error desconocido'));
       }
     );
   }
@@ -55,6 +56,7 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener tipos de servicio:', error);
+        alert('Error al cargar tipos de servicio');
       }
     );
   }
@@ -67,6 +69,7 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener estados:', error);
+        alert('Error al cargar estados');
       }
     );
   }
@@ -79,6 +82,7 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener planes:', error);
+        alert('Error al cargar planes');
       }
     );
   }
@@ -90,6 +94,7 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener sectores:', error);
+        alert('Error al cargar sectores');
       }
     );
   }
@@ -101,6 +106,7 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener tarifas:', error);
+        alert('Error al cargar tarifas');
       }
     );
   }
@@ -109,23 +115,17 @@ export class BuscarClienteComponent implements OnInit {
     this.apiService.getClientes().subscribe(
       (data: any[]) => {
         this.clientes = data.filter((cliente: any) =>
-          // ✅ ID: Coincidencia exacta
           (this.filtro.id ? cliente.ID.toString() === this.filtro.id.trim() : true) &&
-          
-          // ✅ Nombre: Búsqueda parcial sin importar mayúsculas/minúsculas (busca en nombre y apellido)
           (this.filtro.nombre ? 
             (cliente.NombreCliente?.toLowerCase().includes(this.filtro.nombre.toLowerCase()) ||
              cliente.ApellidoCliente?.toLowerCase().includes(this.filtro.nombre.toLowerCase())) : true) &&
-          
-          // ✅ Cédula: Coincidencia exacta
           (this.filtro.cedula ? cliente.Cedula?.trim() === this.filtro.cedula.trim() : true) &&
-          
-          // ✅ Ubicación: Asegurando que no es null y comparando correctamente
           (this.filtro.ubicacion ? cliente.Ubicacion?.toLowerCase().includes(this.filtro.ubicacion.toLowerCase().trim()) : true)
         );
       },
       (error) => {
         console.error('Error al filtrar clientes:', error);
+        alert('Error al filtrar clientes: ' + (error.error?.message || 'Error desconocido'));
       }
     );
   }
@@ -133,7 +133,6 @@ export class BuscarClienteComponent implements OnInit {
   abrirModalEditar(cliente: any) {
     this.clienteEdit = { 
       ...cliente,
-      // Asegurar que tenemos los IDs correctos para las relaciones
       plan_mb_id: cliente.plan_mb_id || cliente.plan?.id,
       tarifa_id: cliente.tarifa_id || cliente.tarifa?.id,
       sector_id: cliente.sector_id || cliente.sector?.id,
@@ -141,7 +140,6 @@ export class BuscarClienteComponent implements OnInit {
       TipoServicioID: cliente.TipoServicioID || cliente.tipoServicio?.ID
     };
     
-    // Formatear la fecha para el input type="date"
     if (this.clienteEdit.FechaInstalacion) {
       const fecha = new Date(this.clienteEdit.FechaInstalacion);
       this.clienteEdit.FechaInstalacion = fecha.toISOString().split('T')[0];
@@ -151,10 +149,8 @@ export class BuscarClienteComponent implements OnInit {
   }
   
   guardarEdicion() {
-    // Limpiar campos vacíos antes de enviar
     const clienteParaActualizar = { ...this.clienteEdit };
     
-    // Convertir strings vacíos a null para los IDs
     if (!clienteParaActualizar.plan_mb_id) clienteParaActualizar.plan_mb_id = null;
     if (!clienteParaActualizar.tarifa_id) clienteParaActualizar.tarifa_id = null;
     if (!clienteParaActualizar.sector_id) clienteParaActualizar.sector_id = null;
@@ -164,7 +160,7 @@ export class BuscarClienteComponent implements OnInit {
     this.apiService.updateCliente(this.clienteEdit.ID, clienteParaActualizar).subscribe(
       () => {
         this.modalEditar = false;
-        this.cargarClientes(); // Recargar clientes
+        this.cargarClientes();
         alert('Cliente actualizado correctamente');
       },
       (error) => {
@@ -175,27 +171,48 @@ export class BuscarClienteComponent implements OnInit {
   }
   
   abrirModalEliminar(id: number) {
+    if (id == null || id <= 0) {
+      console.error('ID de cliente inválido:', id);
+      alert('Error: ID de cliente inválido');
+      return;
+    }
     this.clienteEliminarId = id;
     this.modalEliminar = true;
   }
   
   eliminarCliente() {
-    if (this.clienteEliminarId !== null) {
-      this.apiService.deleteCliente(this.clienteEliminarId).subscribe(
-        () => {
-          this.modalEliminar = false;
-          this.cargarClientes(); // Recargar lista después de eliminar
-          alert('Cliente eliminado correctamente');
-        },
-        (error) => {
-          console.error('Error al eliminar cliente:', error);
-          alert('Error al eliminar cliente');
-        }
-      );
+    if (this.clienteEliminarId == null || this.clienteEliminarId <= 0) {
+      console.error('No se puede eliminar: ID de cliente no válido:', this.clienteEliminarId);
+      alert('Error: ID de cliente no válido');
+      this.modalEliminar = false;
+      return;
     }
+    
+    this.apiService.deleteCliente(this.clienteEliminarId).subscribe(
+      () => {
+        this.modalEliminar = false;
+        this.clienteEliminarId = null;
+        this.cargarClientes();
+        alert('Cliente eliminado correctamente');
+      },
+      (error) => {
+        console.error('Error al eliminar cliente:', error);
+        let errorMessage = 'Error al eliminar cliente';
+        if (error.status === 500) {
+          errorMessage += ': Error interno del servidor';
+          if (error.error?.message) {
+            errorMessage += ` - ${error.error.message}`;
+          }
+        } else if (error.status === 404) {
+          errorMessage += ': Cliente no encontrado';
+        } else if (error.status === 403) {
+          errorMessage += ': Permiso denegado';
+        }
+        alert(errorMessage);
+      }
+    );
   }
 
-  // Método para aplicar colores según el estado por nombre (fallback)
   getEstadoColorByName(estado: string): string {
     if (!estado) return '#6b7280';
     
@@ -209,11 +226,9 @@ export class BuscarClienteComponent implements OnInit {
     }
   }
 
-  // Método para obtener el color de texto según el fondo
   getTextColorForBg(backgroundColor: string): string {
     if (!backgroundColor) return '#000000';
     
-    // Convertir hex a RGB y calcular luminosidad
     const hex = backgroundColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
