@@ -1,12 +1,22 @@
 <div class="p-6 max-w-2xl mx-auto">
   <h1 class="text-3xl font-bold mb-6">Agregar Nuevo Cliente</h1>
   
-  <form [formGroup]="clienteForm" (ngSubmit)="agregarCliente()" class="bg-white shadow-md rounded p-6">
+  <!-- ✅ Verificar permiso antes de mostrar el formulario -->
+  <div *ngIf="!tienePermiso" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para agregar clientes.</p>
+    <button routerLink="/buscar-cliente" class="mt-2 btn-secondary">Volver</button>
+  </div>
+  
+  <form *ngIf="tienePermiso" [formGroup]="clienteForm" (ngSubmit)="agregarCliente()" class="bg-white shadow-md rounded p-6">
     <div class="grid grid-cols-2 gap-4">
       <!-- Información básica -->
       <div>
         <label class="label">Nombre del Cliente</label>
-        <input type="text" formControlName="NombreCliente" class="input">
+        <input type="text" 
+               formControlName="NombreCliente" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('NombreCliente')?.invalid && clienteForm.get('NombreCliente')?.touched" 
              class="text-red-500 text-sm mt-1">
           Nombre es obligatorio
@@ -15,7 +25,10 @@
       
       <div>
         <label class="label">Apellido del Cliente</label>
-        <input type="text" formControlName="ApellidoCliente" class="input">
+        <input type="text" 
+               formControlName="ApellidoCliente" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('ApellidoCliente')?.invalid && clienteForm.get('ApellidoCliente')?.touched" 
              class="text-red-500 text-sm mt-1">
           Apellido es obligatorio
@@ -24,7 +37,9 @@
       
       <div>
         <label class="label">Plan</label>
-        <select formControlName="plan_mb_id" class="input">
+        <select formControlName="plan_mb_id" 
+                class="input"
+                [disabled]="!tienePermiso">
           <option [ngValue]="null">Seleccione un plan</option>
           <option *ngFor="let plan of planes" [value]="plan.id">{{ plan.nombre }} - {{ plan.velocidad }}</option>
         </select>
@@ -36,7 +51,10 @@
       
       <div>
         <label class="label">Fecha de Instalación</label>
-        <input type="date" formControlName="FechaInstalacion" class="input">
+        <input type="date" 
+               formControlName="FechaInstalacion" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('FechaInstalacion')?.invalid && clienteForm.get('FechaInstalacion')?.touched" 
              class="text-red-500 text-sm mt-1">
           Fecha de instalación es obligatoria
@@ -45,7 +63,9 @@
       
       <div>
         <label class="label">Estado</label>
-        <select formControlName="EstadoID" class="input">
+        <select formControlName="EstadoID" 
+                class="input"
+                [disabled]="!tienePermiso">
           <option [ngValue]="null">Seleccione un estado</option>
           <option *ngFor="let estado of estados" [value]="estado.ID">{{ estado.Estado }}</option>
         </select>
@@ -57,7 +77,9 @@
       
       <div>
         <label class="label">Tarifa</label>
-        <select formControlName="tarifa_id" class="input">
+        <select formControlName="tarifa_id" 
+                class="input"
+                [disabled]="!tienePermiso">
           <option [ngValue]="null">Seleccione una tarifa</option>
           <option *ngFor="let tarifa of tarifas" [value]="tarifa.id">{{ tarifa.valor }}</option>
         </select>
@@ -69,7 +91,9 @@
       
       <div>
         <label class="label">Sector</label>
-        <select formControlName="sector_id" class="input">
+        <select formControlName="sector_id" 
+                class="input"
+                [disabled]="!tienePermiso">
           <option [ngValue]="null">Seleccione un sector</option>
           <option *ngFor="let sector of sectores" [value]="sector.id">{{ sector.nombre }}</option>
         </select>
@@ -81,7 +105,10 @@
       
       <div>
         <label class="label">Dirección IP</label>
-        <input type="text" formControlName="IPAddress" class="input">
+        <input type="text" 
+               formControlName="IPAddress" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('IPAddress')?.invalid && clienteForm.get('IPAddress')?.touched" 
              class="text-red-500 text-sm mt-1">
           Dirección IP es obligatoria
@@ -90,7 +117,10 @@
       
       <div>
         <label class="label">Teléfono</label>
-        <input type="text" formControlName="Telefono" class="input">
+        <input type="text" 
+               formControlName="Telefono" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('Telefono')?.invalid && clienteForm.get('Telefono')?.touched" 
              class="text-red-500 text-sm mt-1">
           Teléfono es obligatorio
@@ -99,7 +129,10 @@
       
       <div>
         <label class="label">Ubicación</label>
-        <input type="text" formControlName="Ubicacion" class="input">
+        <input type="text" 
+               formControlName="Ubicacion" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('Ubicacion')?.invalid && clienteForm.get('Ubicacion')?.touched" 
              class="text-red-500 text-sm mt-1">
           Ubicación es obligatoria
@@ -108,7 +141,10 @@
       
       <div>
         <label class="label">Cédula</label>
-        <input type="text" formControlName="Cedula" class="input">
+        <input type="text" 
+               formControlName="Cedula" 
+               class="input"
+               [disabled]="!tienePermiso">
         <div *ngIf="clienteForm.get('Cedula')?.invalid && clienteForm.get('Cedula')?.touched" 
              class="text-red-500 text-sm mt-1">
           Cédula es obligatoria
@@ -117,7 +153,9 @@
       
       <div>
         <label class="label">Tipo de Servicio</label>
-        <select formControlName="TipoServicioID" class="input">
+        <select formControlName="TipoServicioID" 
+                class="input"
+                [disabled]="!tienePermiso">
           <option [ngValue]="null">Seleccione un tipo de servicio</option>
           <option *ngFor="let tipo of tiposServicio" [value]="tipo.ID">{{ tipo.Tipo }}</option>
         </select>
@@ -130,7 +168,9 @@
     
     <div class="mt-6 flex justify-end space-x-4">
       <button type="button" class="btn-secondary" routerLink="/buscar-cliente">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="clienteForm.invalid || isSubmitting">
+      <button type="submit" 
+              class="btn-primary" 
+              [disabled]="clienteForm.invalid || isSubmitting || !tienePermiso">
         {{ isSubmitting ? 'Agregando...' : 'Agregar Cliente' }}
       </button>
     </div>

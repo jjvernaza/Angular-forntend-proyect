@@ -1,9 +1,21 @@
 <div class="p-6">
+  <!-- ✅ Verificar permiso para acceder al módulo -->
+  <div *ngIf="!tienePermisoLeer && !tienePermisoCrear && !tienePermisoActualizar && !tienePermisoEliminar" 
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para acceder a este módulo.</p>
+    <button routerLink="/dashboard" class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <!-- ✅ Contenido del módulo - Solo visible con permisos -->
+  <div *ngIf="tienePermisoLeer || tienePermisoCrear || tienePermisoActualizar || tienePermisoEliminar">
     <h1 class="text-3xl font-bold mb-6">Administración de Planes</h1>
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Formulario -->
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <!-- Formulario - Solo visible si puede crear o actualizar -->
+      <div *ngIf="tienePermisoCrear || tienePermisoActualizar" class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-semibold mb-4">
           {{ modoEdicion ? 'Editar Plan' : 'Nuevo Plan' }}
         </h2>
@@ -17,6 +29,7 @@
               formControlName="nombre" 
               class="w-full border border-gray-300 rounded-md p-2"
               [ngClass]="{'border-red-500': submitted && f['nombre'].errors}"
+              [disabled]="modoEdicion ? !tienePermisoActualizar : !tienePermisoCrear"
             >
             <div *ngIf="submitted && f['nombre'].errors" class="text-red-500 text-sm mt-1">
               <div *ngIf="f['nombre'].errors['required']">El nombre es obligatorio</div>
@@ -32,6 +45,7 @@
               class="w-full border border-gray-300 rounded-md p-2"
               placeholder="Ej: 10Mbps, 20Mbps/5Mbps"
               [ngClass]="{'border-red-500': submitted && f['velocidad'].errors}"
+              [disabled]="modoEdicion ? !tienePermisoActualizar : !tienePermisoCrear"
             >
             <div *ngIf="submitted && f['velocidad'].errors" class="text-red-500 text-sm mt-1">
               <div *ngIf="f['velocidad'].errors['required']">La velocidad es obligatoria</div>
@@ -49,7 +63,7 @@
             <button 
               type="submit" 
               class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
-              [disabled]="isSubmitting"
+              [disabled]="isSubmitting || (modoEdicion ? !tienePermisoActualizar : !tienePermisoCrear)"
             >
               <span *ngIf="!isSubmitting">{{ modoEdicion ? 'Actualizar' : 'Guardar' }}</span>
               <span *ngIf="isSubmitting">
@@ -73,7 +87,8 @@
       </div>
       
       <!-- Lista de planes -->
-      <div class="md:col-span-2 bg-white rounded-lg shadow-md p-6">
+      <div [ngClass]="tienePermisoCrear || tienePermisoActualizar ? 'md:col-span-2' : 'md:col-span-3'" 
+           class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-semibold mb-4">Planes Disponibles</h2>
         
         <!-- Estado de carga -->
@@ -85,14 +100,15 @@
         </div>
         
         <!-- Tabla de planes -->
-        <div *ngIf="!isLoading" class="overflow-x-auto">
+        <div *ngIf="!isLoading && tienePermisoLeer" class="overflow-x-auto">
           <table *ngIf="planes.length > 0" class="min-w-full border-collapse">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Velocidad</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th *ngIf="tienePermisoActualizar || tienePermisoEliminar" 
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -100,16 +116,21 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.id }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ plan.nombre }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.velocidad }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td *ngIf="tienePermisoActualizar || tienePermisoEliminar" 
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
+                    *ngIf="tienePermisoActualizar"
                     (click)="editarPlan(plan)" 
                     class="text-blue-600 hover:text-blue-900 mr-3"
+                    title="Editar plan"
                   >
                     Editar
                   </button>
                   <button 
+                    *ngIf="tienePermisoEliminar"
                     (click)="confirmarEliminar(plan)" 
                     class="text-red-600 hover:text-red-900"
+                    title="Eliminar plan"
                   >
                     Eliminar
                   </button>
@@ -122,6 +143,12 @@
           <div *ngIf="planes.length === 0" class="text-center py-8 text-gray-500">
             No hay planes registrados. Añade uno nuevo para comenzar.
           </div>
+        </div>
+
+        <!-- ⚠️ Mensaje si no tiene permiso para ver -->
+        <div *ngIf="!tienePermisoLeer && (tienePermisoCrear || tienePermisoActualizar || tienePermisoEliminar)" 
+             class="text-center py-8 text-yellow-600">
+          No tienes permisos para ver la lista de planes.
         </div>
       </div>
     </div>
@@ -147,7 +174,7 @@
           <button 
             (click)="eliminarPlan()" 
             class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
-            [disabled]="isDeletingPlan"
+            [disabled]="isDeletingPlan || !tienePermisoEliminar"
           >
             <span *ngIf="!isDeletingPlan">Eliminar</span>
             <span *ngIf="isDeletingPlan">Eliminando...</span>
@@ -160,3 +187,4 @@
       </div>
     </div>
   </div>
+</div>

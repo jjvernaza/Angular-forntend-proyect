@@ -1,7 +1,9 @@
 import { Component, OnInit, Inject, PLATFORM_ID, OnDestroy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Chart, ChartType } from 'chart.js/auto';
 import { ApiService } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 
 interface MonthlyIncomeItem {
@@ -20,7 +22,7 @@ interface ExpectedIncomeItem {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -54,14 +56,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     'DICIEMBRE': 'Diciembre'
   };
 
+  // ✅ Variable de permisos
+  tienePermiso: boolean = false;
+
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    // ✅ Verificar permisos
+    this.verificarPermisos();
+
     if (isPlatformBrowser(this.platformId)) {
-      this.loadDashboardData();
+      // ✅ Solo cargar si tiene permisos
+      if (this.tienePermiso) {
+        this.loadDashboardData();
+      }
     }
   }
 
@@ -74,11 +86,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.sectorChart) this.sectorChart.destroy();
   }
 
+  private verificarPermisos(): void {
+    this.tienePermiso = this.authService.hasPermission('dashboard.ver');
+    
+    console.log('🔐 Permisos en dashboard:');
+    console.log('   Ver dashboard:', this.tienePermiso);
+    console.log('   Permisos del usuario:', this.authService.getUserPermissions());
+  }
+
   loadDashboardData(): void {
+    if (!this.tienePermiso) {
+      console.log('❌ Sin permisos para cargar dashboard');
+      return;
+    }
+
     const statsSub = this.apiService.getDashboardStats().subscribe({
       next: (data: any) => {
         this.dashboardStats = data;
-        console.log('Dashboard stats:', data);
+        console.log('✅ Dashboard stats cargados:', data);
         
         if (data.pagos?.ultimosDosMeses) {
           this.monthlyIncomeData = data.pagos.ultimosDosMeses.map((item: any) => ({
@@ -105,7 +130,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }, 300);
       },
       error: (error: any) => {
-        console.error('Error al cargar estadísticas del dashboard:', error);
+        console.error('❌ Error al cargar estadísticas del dashboard:', error);
       }
     });
     
@@ -306,6 +331,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   downloadData(): void {
+    if (!this.tienePermiso) {
+      alert('No tienes permisos para descargar datos.');
+      return;
+    }
+
     if (!this.monthlyIncomeData.length) {
       alert('No hay datos disponibles para descargar');
       return;
@@ -329,18 +359,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      console.log('✅ CSV descargado');
     } catch (error) {
-      console.error('Error al descargar datos:', error);
+      console.error('❌ Error al descargar datos:', error);
       alert('Error al generar la descarga');
     }
   }
 
   downloadClientsExcel(): void {
-    console.log('Iniciando descarga de Excel...');
+    if (!this.tienePermiso) {
+      alert('No tienes permisos para descargar reportes.');
+      return;
+    }
+
+    console.log('📥 Iniciando descarga de Excel...');
     
     const excelSub = this.apiService.exportClientsToExcel().subscribe({
       next: (blob: Blob) => {
-        console.log('Excel recibido, creando descarga...');
+        console.log('✅ Excel recibido, creando descarga...');
         
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -355,7 +392,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         
         window.URL.revokeObjectURL(url);
         
-        console.log('✅ Descarga de Excel completada');
+        console.log('✅ Descarga completada');
       },
       error: (error: any) => {
         console.error('❌ Error al descargar Excel:', error);
@@ -367,6 +404,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   downloadReporteClientesPagos(): void {
+    if (!this.tienePermiso) {
+      alert('No tienes permisos para descargar reportes.');
+      return;
+    }
+
     console.log(`📥 Descargando reporte de pagos del año ${this.selectedYear}...`);
     
     const reportSub = this.apiService.exportClientesPagosExcel(this.selectedYear).subscribe({
@@ -396,6 +438,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   
   changeYear(year: number): void {
+    if (!this.tienePermiso) {
+      alert('No tienes permisos para cambiar el año.');
+      return;
+    }
+
     if (this.selectedYear !== year) {
       this.selectedYear = year;
       this.loadDashboardData();
@@ -426,6 +473,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
     
     return estado ? estado.cantidad : 0;
+  }
+  
+  getExpectedIncomeForIndex(index: number): number {
+    if (this.expectedIncomeData && this.expectedIncomeData[index]) {
+      return this.expectedIncomeData[index].totalEsperado || 0;
+    }
+    return 0;
   }
   
   getDiferencia(mes: string): number {

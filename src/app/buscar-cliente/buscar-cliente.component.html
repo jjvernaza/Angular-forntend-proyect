@@ -1,21 +1,64 @@
 <div class="p-6">
   <h1 class="text-4xl font-bold mb-4">Buscar Clientes</h1>
 
-  <!-- Filtros de búsqueda -->  
-<div class="flex items-center mb-4 space-x-2">
-  <input type="text" placeholder="Buscar por ID" [(ngModel)]="filtro.id" class="search-input">
-  <input type="text" placeholder="Buscar por nombre" [(ngModel)]="filtro.nombre" class="search-input">
-  <input type="text" placeholder="Buscar por cédula" [(ngModel)]="filtro.cedula" class="search-input">
-  <input type="text" placeholder="Buscar por ubicación" [(ngModel)]="filtro.ubicacion" class="search-input">
-  
-  <button class="btn-search" (click)="buscarClientes()">
-    <i class="fas fa-search"></i> Buscar
-  </button>
-</div>
+  <!-- ✅ Verificar permiso para ver clientes -->
+  <div *ngIf="!tienePermisoLeer" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para ver clientes.</p>
+  </div>
 
+  <!-- Filtros de búsqueda en una sola línea -->  
+  <div *ngIf="tienePermisoLeer" class="flex items-center mb-4 space-x-2">
+    <input type="text" 
+           placeholder="Buscar por ID" 
+           [(ngModel)]="filtro.id" 
+           class="search-input"
+           [disabled]="!tienePermisoLeer">
+    <input type="text" 
+           placeholder="Buscar por nombre" 
+           [(ngModel)]="filtro.nombre" 
+           class="search-input"
+           [disabled]="!tienePermisoLeer">
+    <input type="text" 
+           placeholder="Buscar por apellido" 
+           [(ngModel)]="filtro.apellido" 
+           class="search-input"
+           [disabled]="!tienePermisoLeer">
+    <input type="text" 
+           placeholder="Buscar por cédula" 
+           [(ngModel)]="filtro.cedula" 
+           class="search-input"
+           [disabled]="!tienePermisoLeer">
+    <input type="text" 
+           placeholder="Buscar por teléfono" 
+           [(ngModel)]="filtro.telefono" 
+           class="search-input"
+           [disabled]="!tienePermisoLeer">
+    <input type="text" 
+           placeholder="Buscar por ubicación" 
+           [(ngModel)]="filtro.ubicacion" 
+           class="search-input"
+           [disabled]="!tienePermisoLeer">
+    
+    <button class="btn-search" 
+            (click)="buscarClientes()"
+            [disabled]="!tienePermisoLeer">
+      <i class="fas fa-search"></i> Buscar
+    </button>
+    <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" 
+            (click)="limpiarFiltros()"
+            [disabled]="!tienePermisoLeer">
+      <i class="fas fa-eraser"></i> Limpiar Filtros
+    </button>
+  </div>
+
+  <!-- Contador de resultados -->
+  <div *ngIf="tienePermisoLeer && clientes.length > 0" class="mb-3 text-gray-600">
+    <strong>{{ clientes.length }}</strong> cliente(s) encontrado(s)
+  </div>
 
   <!-- Tabla de clientes -->
-  <div class="table-container">
+  <div *ngIf="tienePermisoLeer" class="table-container">
     <table class="min-w-full bg-white border border-gray-200">
       <thead>
         <tr>
@@ -46,7 +89,7 @@
               <small class="text-gray-500 block">{{ cliente.plan.velocidad }}</small>
             </span>
             <ng-template #noPlan>
-              <span class="text-red-400">Sin plan (ID: {{ cliente.plan_mb_id }})</span>
+              <span class="text-red-400">Sin plan</span>
             </ng-template>
           </td>
           <td class="border border-gray-300 px-4 py-2">{{ cliente.FechaInstalacion | date:'dd/MM/yyyy' }}</td>
@@ -55,7 +98,7 @@
               {{ cliente.tipoServicio.Tipo }}
             </span>
             <ng-template #noTipoServicio>
-              <span class="text-red-400">Sin tipo (ID: {{ cliente.TipoServicioID }})</span>
+              <span class="text-red-400">Sin tipo</span>
             </ng-template>
           </td>
           <td class="border border-gray-300 px-4 py-2">
@@ -63,7 +106,7 @@
               ${{ cliente.tarifa.valor | number:'1.0-0' }}
             </span>
             <ng-template #noTarifa>
-              <span class="text-red-400">Sin tarifa (ID: {{ cliente.tarifa_id }})</span>
+              <span class="text-red-400">Sin tarifa</span>
             </ng-template>
           </td>
           <td class="border border-gray-300 px-4 py-2">
@@ -90,21 +133,52 @@
             </ng-template>
           </td>
           <td class="border border-gray-300 px-4 py-2 text-center">
-            <button (click)="abrirModalEditar(cliente)" class="text-blue-500 mr-2">
+            <!-- ✅ Botón Editar - Solo visible si tiene permiso -->
+            <button *ngIf="tienePermisoActualizar"
+                    (click)="abrirModalEditar(cliente)" 
+                    class="text-blue-500 mr-2 hover:text-blue-700"
+                    title="Editar cliente">
               <i class="fas fa-pencil-alt"></i>
             </button>
-            <button (click)="abrirModalEliminar(cliente.ID)" class="text-red-500">
+            
+            <!-- ⚠️ Botón Editar deshabilitado si NO tiene permiso -->
+            <button *ngIf="!tienePermisoActualizar"
+                    (click)="mostrarMensajePermisos('editar')"
+                    class="text-gray-400 mr-2 cursor-not-allowed opacity-50"
+                    title="No tienes permiso para editar">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            
+            <!-- ✅ Botón Eliminar - Solo visible si tiene permiso -->
+            <button *ngIf="tienePermisoEliminar"
+                    (click)="abrirModalEliminar(cliente.ID)" 
+                    class="text-red-500 hover:text-red-700"
+                    title="Eliminar cliente">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+            
+            <!-- ⚠️ Botón Eliminar deshabilitado si NO tiene permiso -->
+            <button *ngIf="!tienePermisoEliminar"
+                    (click)="mostrarMensajePermisos('eliminar')"
+                    class="text-gray-400 cursor-not-allowed opacity-50"
+                    title="No tienes permiso para eliminar">
               <i class="fas fa-trash-alt"></i>
             </button>
           </td>
         </tr>
       </tbody>
     </table>
-  </div>  
+  </div>
+
+  <!-- Mensaje cuando no hay resultados -->
+  <div *ngIf="tienePermisoLeer && clientes.length === 0" class="text-center py-8 text-gray-500">
+    <i class="fas fa-search text-4xl mb-3"></i>
+    <p class="text-lg">No se encontraron clientes con los criterios de búsqueda.</p>
+  </div>
 </div>
 
 <!-- Modal de edición -->
-<div *ngIf="modalEditar" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+<div *ngIf="modalEditar && tienePermisoActualizar" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
   <div class="bg-white p-6 rounded shadow-lg w-2/3 max-h-screen overflow-y-auto">
     <h2 class="text-2xl font-bold mb-4">Editar Cliente</h2>
 
@@ -196,20 +270,20 @@
     <input type="text" [(ngModel)]="clienteEdit.Ubicacion" class="border p-2 w-full mb-3">
 
     <div class="flex justify-end mt-4 space-x-2">
-      <button class="bg-green-500 text-white px-4 py-2 rounded" (click)="guardarEdicion()">Guardar</button>
-      <button class="bg-gray-500 text-white px-4 py-2 rounded" (click)="modalEditar = false">Cancelar</button>
+      <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" (click)="guardarEdicion()">Guardar</button>
+      <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" (click)="modalEditar = false">Cancelar</button>
     </div>
   </div>
 </div>
 
 <!-- Modal de eliminación -->
-<div *ngIf="modalEliminar" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+<div *ngIf="modalEliminar && tienePermisoEliminar" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
   <div class="bg-white p-6 rounded shadow-lg w-1/3">
     <h2 class="text-2xl font-bold mb-4">¿Eliminar este cliente?</h2>
     <p class="text-gray-600 mb-4">Esta acción no se puede deshacer.</p>
-    <div class="flex justify-end">
-      <button class="bg-red-500 text-white px-4 py-2 rounded" (click)="eliminarCliente()">Eliminar</button>
-      <button class="bg-gray-500 text-white px-4 py-2 rounded ml-2" (click)="modalEliminar = false">Cancelar</button>
+    <div class="flex justify-end space-x-2">
+      <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" (click)="eliminarCliente()">Eliminar</button>
+      <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" (click)="modalEliminar = false">Cancelar</button>
     </div>
   </div>
 </div>

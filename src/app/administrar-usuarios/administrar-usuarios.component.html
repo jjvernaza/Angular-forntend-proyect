@@ -1,0 +1,419 @@
+<div class="p-6">
+  <!-- ✅ Verificar permiso para acceder al módulo -->
+  <div *ngIf="!tienePermisoLeer" 
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para acceder a este módulo.</p>
+    <button routerLink="/dashboard" class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <!-- ✅ Contenido del módulo -->
+  <div *ngIf="tienePermisoLeer">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">Administración de Usuarios</h1>
+      <button 
+        routerLink="/crear-usuario"
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
+        <i class="fas fa-user-plus"></i>
+        Crear Nuevo Usuario
+      </button>
+    </div>
+
+    <!-- Mensajes -->
+    <div *ngIf="successMessage" class="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+      {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Búsqueda -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+          <div class="relative">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <input 
+              type="text" 
+              [(ngModel)]="textoBusqueda"
+              (ngModelChange)="aplicarFiltros()"
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nombre, usuario, cédula, función...">
+          </div>
+        </div>
+
+        <!-- Filtro por estado -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <select 
+            [(ngModel)]="filtroEstado"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="todos">Todos</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="mt-3 text-sm text-gray-600">
+        Mostrando {{ usuariosFiltrados.length }} de {{ usuarios.length }} usuarios
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div *ngIf="!isLoading" class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Función</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let usuario of usuariosFiltrados" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ usuario.ID }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span class="text-white font-bold">{{ usuario.Nombre?.charAt(0) }}{{ usuario.Apellidos?.charAt(0) }}</span>
+                  </div>
+                  <div class="ml-3">
+                    <div class="text-sm font-medium text-gray-900">{{ usuario.User }}</div>
+                    <div class="text-sm text-gray-500">{{ usuario.Telefono }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ usuario.Nombre }} {{ usuario.Apellidos }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ usuario.Cedula }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ usuario.Funcion }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span [ngClass]="getEstadoClase(usuario.estado_id)"
+                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                  {{ getEstadoNombre(usuario.estado_id) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                <button 
+                  (click)="verDetalles(usuario)"
+                  class="text-gray-600 hover:text-gray-900"
+                  title="Ver detalles">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button 
+                  *ngIf="tienePermisoActualizar"
+                  (click)="abrirModalEditar(usuario)"
+                  class="text-blue-600 hover:text-blue-900"
+                  title="Editar usuario">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                  *ngIf="tienePermisoGestionarPermisos"
+                  (click)="abrirModalPermisos(usuario)"
+                  class="text-green-600 hover:text-green-900"
+                  title="Gestionar permisos">
+                  <i class="fas fa-key"></i>
+                </button>
+                <button 
+                  *ngIf="tienePermisoEliminar"
+                  (click)="abrirModalEliminar(usuario)"
+                  class="text-red-600 hover:text-red-900"
+                  title="Eliminar usuario">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Sin resultados -->
+        <div *ngIf="usuariosFiltrados.length === 0" class="text-center py-12 text-gray-500">
+          <i class="fas fa-users text-5xl mb-4"></i>
+          <p class="text-lg">No se encontraron usuarios con los filtros aplicados</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver Detalles -->
+<div *ngIf="mostrarModalVer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Detalles del Usuario</h2>
+      <button (click)="cerrarModales()" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">ID</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.ID }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Usuario</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.User }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Nombre</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.Nombre }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Apellidos</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.Apellidos }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Cédula</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.Cedula }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.Telefono }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Función</label>
+        <p class="mt-1 text-sm text-gray-900">{{ usuarioSeleccionado.Funcion }}</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Estado</label>
+        <p class="mt-1">
+          <span [ngClass]="getEstadoClase(usuarioSeleccionado.estado_id)"
+                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+            {{ getEstadoNombre(usuarioSeleccionado.estado_id) }}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button 
+        (click)="cerrarModales()"
+        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div *ngIf="mostrarModalEditar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Editar Usuario</h2>
+      <button (click)="cerrarModales()" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+      {{ errorMessage }}
+    </div>
+
+    <form (ngSubmit)="guardarEdicion()" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="usuarioEditando.Nombre"
+            name="nombre"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="usuarioEditando.Apellidos"
+            name="apellidos"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cédula *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="usuarioEditando.Cedula"
+            name="cedula"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="usuarioEditando.Telefono"
+            name="telefono"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Usuario *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="usuarioEditando.User"
+            name="user"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Función *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="usuarioEditando.Funcion"
+            name="funcion"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
+          <select 
+            [(ngModel)]="usuarioEditando.estado_id"
+            name="estado"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+            <option *ngFor="let estado of estados" [value]="estado.ID">
+              {{ estado.Estado }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-4">
+        <button 
+          type="button"
+          (click)="cerrarModales()"
+          class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancelar
+        </button>
+        <button 
+          type="submit"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400">
+          <span *ngIf="!isSubmitting">Guardar Cambios</span>
+          <span *ngIf="isSubmitting">Guardando...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Gestionar Permisos -->
+<div *ngIf="mostrarModalPermisos" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl m-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Gestionar Permisos - {{ usuarioSeleccionado.Nombre }} {{ usuarioSeleccionado.Apellidos }}</h2>
+      <button (click)="cerrarModales()" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <div *ngIf="successMessage" class="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+      {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Estado de carga -->
+    <div *ngIf="isLoadingPermisos" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Lista de permisos -->
+    <div *ngIf="!isLoadingPermisos" class="max-h-96 overflow-y-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div *ngFor="let permiso of todosLosPermisos" 
+             class="flex items-center p-3 border rounded-md hover:bg-gray-50">
+          <input 
+            type="checkbox"
+            [id]="'permiso-' + permiso.id"
+            [checked]="tienePermisoAsignado(permiso.id)"
+            (change)="togglePermiso(permiso.id)"
+            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+          <label [for]="'permiso-' + permiso.id" class="ml-3 flex-1 cursor-pointer">
+            <div class="text-sm font-medium text-gray-900">{{ permiso.nombre }}</div>
+            <div class="text-xs text-gray-500">{{ permiso.descripcion || 'Sin descripción' }}</div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-between items-center">
+      <div class="text-sm text-gray-600">
+        <i class="fas fa-info-circle"></i>
+        {{ usuarioPermisosAsignados.length }} permisos asignados de {{ todosLosPermisos.length }}
+      </div>
+      <button 
+        (click)="cerrarModales()"
+        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Eliminar Usuario -->
+<div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4 text-red-600">Confirmar Eliminación</h2>
+    
+    <p class="text-gray-700 mb-4">
+      ¿Estás seguro de que deseas eliminar al usuario:
+    </p>
+    <div class="bg-gray-100 p-3 rounded-md mb-4">
+      <p class="font-bold">{{ usuarioSeleccionado.Nombre }} {{ usuarioSeleccionado.Apellidos }}</p>
+      <p class="text-sm text-gray-600">Usuario: {{ usuarioSeleccionado.User }}</p>
+      <p class="text-sm text-gray-600">Cédula: {{ usuarioSeleccionado.Cedula }}</p>
+    </div>
+    
+    <p class="text-red-500 text-sm mb-6">
+      ⚠️ Esta acción no se puede deshacer. Se eliminarán todos los permisos asociados.
+    </p>
+
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+      {{ errorMessage }}
+    </div>
+    
+    <div class="flex justify-end space-x-3">
+      <button 
+        (click)="cerrarModales()"
+        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+        Cancelar
+      </button>
+      <button 
+        (click)="confirmarEliminar()"
+        [disabled]="isSubmitting"
+        class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-400">
+        <span *ngIf="!isSubmitting">Eliminar</span>
+        <span *ngIf="isSubmitting">Eliminando...</span>
+      </button>
+    </div>
+  </div>
+</div>

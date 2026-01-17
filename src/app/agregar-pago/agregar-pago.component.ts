@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { MetodoPagoService } from '../services/metodo-pago.service';
 import { FacturaService } from '../services/factura.service';
 
@@ -32,24 +33,38 @@ export class AgregarPagoComponent implements OnInit {
   mostrarSelectorMeses: boolean = false;
   mesesSeleccionados: number = 1;
 
-  // ✅ Lista de meses en español
+  // Lista de meses en español
   mesesDelAnio: string[] = [
     'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
     'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
   ];
 
-  // ✅ Generar años dinámicos desde 2024 en adelante
+  // Generar años dinámicos desde 2024 en adelante
   aniosDesde2024: number[] = [];
+
+  // ✅ Variables de permisos
+  tienePermisoLeer: boolean = false;
+  tienePermisoCrear: boolean = false;
 
   constructor(
     private fb: FormBuilder, 
     private apiService: ApiService,
+    private authService: AuthService,
     private metodoPagoService: MetodoPagoService,
     private facturaService: FacturaService
   ) {}
 
   ngOnInit(): void {
-    // ✅ Inicializar formulario
+    // ✅ Verificar permisos
+    this.verificarPermisos();
+
+    // ✅ Solo inicializar si tiene algún permiso
+    if (!this.tienePermisoLeer && !this.tienePermisoCrear) {
+      console.log('❌ Usuario sin permisos para este módulo');
+      return;
+    }
+
+    // Inicializar formulario
     this.pagoForm = this.fb.group({
       ClienteID: ['', Validators.required],
       FechaPago: ['', Validators.required],
@@ -65,11 +80,11 @@ export class AgregarPagoComponent implements OnInit {
       this.aniosDesde2024.push(i);
     }
 
-    // ✅ Obtener métodos de pago usando el nuevo servicio
+    // Obtener métodos de pago
     this.metodoPagoService.getAllMetodosPago().subscribe(
       (data) => {
         this.metodosPago = data;
-        console.log("Métodos de pago obtenidos:", this.metodosPago);
+        console.log("✅ Métodos de pago obtenidos:", this.metodosPago.length);
       },
       (error) => console.error('❌ Error al obtener métodos de pago:', error)
     );
@@ -85,10 +100,29 @@ export class AgregarPagoComponent implements OnInit {
     });
   }
 
-  // 🔍 Buscar Cliente
-  buscarCliente() {
-    if (!this.terminoBusqueda.trim()) return;
+  private verificarPermisos(): void {
+    this.tienePermisoLeer = this.authService.hasPermission('pagos.leer');
+    this.tienePermisoCrear = this.authService.hasPermission('pagos.crear');
     
+    console.log('🔐 Permisos en agregar-pago:');
+    console.log('   Leer:', this.tienePermisoLeer);
+    console.log('   Crear:', this.tienePermisoCrear);
+  }
+
+  // ✅ Buscar Cliente - MEJORADO con búsqueda por nombre, apellido y teléfono
+  buscarCliente() {
+    if (!this.tienePermisoLeer) {
+      alert('No tienes permisos para buscar clientes.');
+      return;
+    }
+
+    if (!this.terminoBusqueda.trim()) {
+      alert('Por favor ingresa un término de búsqueda');
+      return;
+    }
+    
+    console.log('🔍 Buscando cliente:', this.terminoBusqueda);
+
     this.apiService.getClientes().subscribe(
       (clientes) => {
         if (!clientes || clientes.length === 0) {
@@ -100,33 +134,54 @@ export class AgregarPagoComponent implements OnInit {
 
         const termino = this.terminoBusqueda.trim().toLowerCase();
 
-        const clienteEncontrado = clientes.find((c: any) =>
-          c.NombreCliente?.toLowerCase().includes(termino) ||
-          c.ApellidoCliente?.toLowerCase().includes(termino) ||
-          c.Cedula?.includes(termino)
-        );
+        // ✅ BÚSQUEDA MEJORADA: nombre, apellido, nombre completo, cédula y teléfono
+        const clienteEncontrado = clientes.find((c: any) => {
+          // Buscar por nombre
+          const coincideNombre = c.NombreCliente?.toLowerCase().includes(termino);
+          
+          // Buscar por apellido
+          const coincideApellido = c.ApellidoCliente?.toLowerCase().includes(termino);
+          
+          // Buscar por nombre completo (nombre + apellido)
+          const nombreCompleto = `${c.NombreCliente || ''} ${c.ApellidoCliente || ''}`.toLowerCase();
+          const coincideNombreCompleto = nombreCompleto.includes(termino);
+          
+          // Buscar por cédula (exacta o parcial)
+          const coincideCedula = c.Cedula?.includes(termino);
+          
+          // ✅ NUEVO: Buscar por teléfono (exacto o parcial)
+          const coincideTelefono = c.Telefono?.includes(termino);
+          
+          return coincideNombre || coincideApellido || coincideNombreCompleto || 
+                 coincideCedula || coincideTelefono;
+        });
 
         if (clienteEncontrado) {
+          console.log('✅ Cliente encontrado:', clienteEncontrado.NombreCliente, clienteEncontrado.ApellidoCliente);
+          
           this.clienteSeleccionado = clienteEncontrado;
           this.pagoForm.patchValue({ 
             ClienteID: clienteEncontrado.ID,
-            // Si hay tarifa, establecer ese valor como monto por defecto
             Monto: clienteEncontrado.tarifa?.valor || ''
           });
 
-          // ✅ Obtener pagos del cliente
+          // Obtener pagos del cliente
           this.apiService.getPagosCliente(clienteEncontrado.ID).subscribe(
             (pagos) => {
               this.pagosCliente = pagos || [];
-              // Ya no es necesario ordenar aquí, el backend ya devuelve los pagos ordenados
               this.pagosFiltrados = [...this.pagosCliente];
 
-              // 🔄 Extraer años únicos para el filtro
+              console.log(`📋 Pagos encontrados: ${this.pagosCliente.length}`);
+
+              // Extraer años únicos para el filtro
               if (this.pagosCliente.length > 0) {
                 this.aniosDisponibles = [...new Set(this.pagosCliente.map(p => p.Ano))].sort();
               } else {
                 this.aniosDisponibles = [];
               }
+
+              // Ordenar pagos por fecha (más recientes primero)
+              this.filtrarPagos();
             },
             (error) => {
               console.error('❌ Error al obtener pagos:', error);
@@ -136,6 +191,7 @@ export class AgregarPagoComponent implements OnInit {
 
           this.mensajeClienteNoEncontrado = false;
         } else {
+          console.log('❌ Cliente no encontrado con el término:', this.terminoBusqueda);
           this.resetCliente();
           this.mensajeClienteNoEncontrado = true;
           setTimeout(() => (this.mensajeClienteNoEncontrado = false), 3000);
@@ -149,7 +205,7 @@ export class AgregarPagoComponent implements OnInit {
     );
   }
 
-  // 🔄 Filtrar pagos por año
+  // Filtrar pagos por año
   filtrarPagos() {
     if (this.filtroAnio === 'todos') {
       this.pagosFiltrados = [...this.pagosCliente];
@@ -157,72 +213,65 @@ export class AgregarPagoComponent implements OnInit {
       this.pagosFiltrados = this.pagosCliente.filter(p => p.Ano == this.filtroAnio);
     }
     
-    // Asegurar que los pagos siempre estén ordenados por fecha más reciente
-    // Esto es una garantía adicional, aunque el backend ya debería devolverlos ordenados
+    // Ordenar por fecha más reciente primero
     this.pagosFiltrados.sort((a, b) => {
-      // Ordenar por fecha de pago en orden descendente (más reciente primero)
       const fechaA = new Date(a.FechaPago);
       const fechaB = new Date(b.FechaPago);
       return fechaB.getTime() - fechaA.getTime();
     });
+
+    console.log(`📊 Pagos filtrados: ${this.pagosFiltrados.length}`);
   }
 
-  // ✅ Agregar Pago y actualizar la tabla de pagos
+  // Agregar Pago
   agregarPago(): void {
+    // ✅ Verificar permiso antes de agregar
+    if (!this.tienePermisoCrear) {
+      alert('No tienes permisos para crear pagos.');
+      return;
+    }
+
     if (this.pagoForm.valid) {
       this.isSubmitting = true;
       this.mensajeExito = false;
       this.mensajeError = false;
 
-      // Convertir ID de método de pago a número
       const pagoData = {
         ...this.pagoForm.value,
         Metodo_de_PagoID: parseInt(this.pagoForm.value.Metodo_de_PagoID, 10)
       };
 
+      console.log('💾 Registrando pago:', pagoData);
+
       this.apiService.addPago(pagoData).subscribe(
         (response) => {
+          console.log('✅ Pago registrado');
           this.mensajeExito = true;
           this.mensajeError = false;
           this.isSubmitting = false;
 
-          // ✅ Agregar el pago a la lista de pagos
-          if (response && response.payment) {
-            const nuevoPago = response.payment;
-            
-            // Buscar el método de pago para mostrarlo correctamente en la tabla
-            const metodoPago = this.metodosPago.find(m => m.ID === nuevoPago.Metodo_de_PagoID);
-            if (metodoPago) {
-              nuevoPago.metodoPago = metodoPago;
-            }
-            
-            // Agregar el nuevo pago al inicio del array para que aparezca primero
-            this.pagosCliente.unshift(nuevoPago);
-            
-            // Asegurar que todos los pagos estén ordenados correctamente por fecha
-            this.pagosCliente.sort((a, b) => {
-              const fechaA = new Date(a.FechaPago);
-              const fechaB = new Date(b.FechaPago);
-              return fechaB.getTime() - fechaA.getTime();
-            });
-            
-            this.filtrarPagos();
+          // Recargar todos los pagos del cliente
+          this.apiService.getPagosCliente(this.clienteSeleccionado.ID).subscribe(
+            (pagos) => {
+              this.pagosCliente = pagos || [];
+              this.filtrarPagos();
 
-            // ✅ Actualizar los años disponibles si es un nuevo año
-            if (!this.aniosDisponibles.includes(nuevoPago.Ano)) {
-              this.aniosDisponibles.push(nuevoPago.Ano);
-              this.aniosDisponibles.sort();
-            }
-            
-            // Generar automáticamente factura pagada
-            this.generarFacturaPagada(this.clienteSeleccionado, nuevoPago);
+              if (this.pagosCliente.length > 0) {
+                this.aniosDisponibles = [...new Set(this.pagosCliente.map(p => p.Ano))].sort();
+              }
+            },
+            (error) => console.error('❌ Error al recargar pagos:', error)
+          );
+          
+          // Generar automáticamente factura pagada
+          if (response && response.payment) {
+            this.generarFacturaPagada(this.clienteSeleccionado, response.payment);
           }
 
-          // ✅ Resetear campos del formulario excepto ClienteID
+          // Resetear campos del formulario excepto ClienteID
           const clienteID = this.pagoForm.value.ClienteID;
           this.pagoForm.reset();
           
-          // Establecer valores por defecto
           const today = new Date();
           const currentMonth = this.mesesDelAnio[today.getMonth()];
           
@@ -246,14 +295,13 @@ export class AgregarPagoComponent implements OnInit {
         }
       );
     } else {
-      // Marcar todos los campos como tocados para mostrar errores
       Object.keys(this.pagoForm.controls).forEach(key => {
         this.pagoForm.get(key)?.markAsTouched();
       });
     }
   }
 
-  // Formatear fecha para input type="date"
+  // Formatear fecha
   formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -261,59 +309,63 @@ export class AgregarPagoComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  // ❌ Reset cliente y pagos si la búsqueda falla
   private resetCliente() {
     this.clienteSeleccionado = null;
     this.pagosCliente = [];
     this.pagosFiltrados = [];
+    this.aniosDisponibles = [];
     this.pagoForm.patchValue({ ClienteID: '' });
   }
 
   private resetPagos() {
     this.pagosCliente = [];
     this.pagosFiltrados = [];
+    this.aniosDisponibles = [];
   }
 
   // Métodos para facturas
-  // Método para generar factura por pagar
   generarFacturaPorPagar(cliente: any, mesesDebidos: number = 1): void {
+    if (!this.tienePermisoLeer) {
+      alert('No tienes permisos para generar facturas.');
+      return;
+    }
+
     if (!cliente?.tarifa) {
-      // Obtener la tarifa del cliente
       this.apiService.getTarifaByClienteId(cliente.ID).subscribe(
         tarifa => {
           this.facturaService.generarFacturaPorPagar(cliente, mesesDebidos, tarifa);
         },
         error => {
           console.error('Error al obtener tarifa del cliente:', error);
-          alert('No se pudo obtener la tarifa del cliente. Por favor, inténtelo de nuevo.');
+          alert('No se pudo obtener la tarifa del cliente.');
         }
       );
     } else {
-      // Si ya tenemos la tarifa del cliente en el objeto cliente
       this.facturaService.generarFacturaPorPagar(cliente, mesesDebidos, cliente.tarifa);
     }
   }
 
-  // Método para generar factura pagada
   generarFacturaPagada(cliente: any, pago: any): void {
+    if (!this.tienePermisoLeer) {
+      alert('No tienes permisos para generar facturas.');
+      return;
+    }
+
     if (!cliente?.tarifa) {
-      // Obtener la tarifa del cliente
       this.apiService.getTarifaByClienteId(cliente.ID).subscribe(
         tarifa => {
           this.facturaService.generarFacturaPagada(cliente, pago, tarifa);
         },
         error => {
           console.error('Error al obtener tarifa del cliente:', error);
-          alert('No se pudo obtener la tarifa del cliente. Por favor, inténtelo de nuevo.');
+          alert('No se pudo obtener la tarifa del cliente.');
         }
       );
     } else {
-      // Si ya tenemos la tarifa del cliente en el objeto cliente
       this.facturaService.generarFacturaPagada(cliente, pago, cliente.tarifa);
     }
   }
   
-  // Métodos para el selector de meses
   abrirSelectorMeses(): void {
     this.mostrarSelectorMeses = true;
   }

@@ -28,10 +28,11 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // ✅ Redirigir si ya tiene token
   ngOnInit() {
+    // ✅ Si ya está autenticado, redirigir a la primera ruta disponible
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard']);
+      const firstRoute = this.authService.getFirstAvailableRoute();
+      this.router.navigate([firstRoute]);
     }
   }
 
@@ -49,23 +50,22 @@ export class LoginComponent implements OnInit {
         console.log('✅ Login exitoso:', {
           username: response.user.nombre,
           role: response.user.funcion,
-          permisos: response.user.permisos
+          permisos: response.user.permisos?.length || 0
         });
         
-        // El token y el usuario ya se guardan en el AuthService por el tap() en el observable
         this.errorMessage = '';
-  
-        // Mensaje de bienvenida personalizado
+        
+        // ✅ Obtener la primera ruta disponible según permisos
+        const firstRoute = this.authService.getFirstAvailableRoute();
+        console.log(`🎯 Redirigiendo a: ${firstRoute}`);
+        
         const welcomeMessage = response.user.nombre 
-          ? `Bienvenido ${response.user.nombre} a la dashboard de VozipCompany`
-          : 'Bienvenido a la dashboard de VozipCompany';
+          ? `Bienvenido ${response.user.nombre} a VozipCompany`
+          : 'Bienvenido a VozipCompany';
           
         alert(welcomeMessage);
-  
-        // 🔁 Dale un pequeño delay para que Angular tenga tiempo de refrescar el guard
-        setTimeout(() => {
-          this.router.navigate(['/dashboard']);
-        }, 100);
+        
+        this.router.navigate([firstRoute]);
       },
       error: (err) => {
         console.error('❌ Error de login:', err);
@@ -73,6 +73,8 @@ export class LoginComponent implements OnInit {
           this.errorMessage = 'Usuario no encontrado.';
         } else if (err.status === 401) {
           this.errorMessage = 'Contraseña incorrecta.';
+        } else if (err.status === 403) {
+          this.errorMessage = 'Usuario inactivo o suspendido.';
         } else {
           this.errorMessage = err?.error?.message || 'Error al iniciar sesión.';
         }

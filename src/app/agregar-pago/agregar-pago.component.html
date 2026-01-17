@@ -1,193 +1,253 @@
+<div class="p-6">
+  <h1 class="text-4xl font-bold mb-4">Registrar Pagos</h1>
+
+  <!-- ✅ Verificar permiso para acceder al módulo -->
+  <div *ngIf="!tienePermisoLeer && !tienePermisoCrear" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para acceder a este módulo.</p>
+  </div>
+
 <!-- 🔍 Búsqueda, filtro por año y botón en una sola fila -->
-<div class="busqueda-horizontal">
-  <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar por nombre o cédula" class="input input-wide">
+<div *ngIf="tienePermisoLeer || tienePermisoCrear" class="busqueda-horizontal">
+  <input type="text" 
+         [(ngModel)]="terminoBusqueda" 
+         placeholder="Buscar por nombre, apellido, cédula o teléfono" 
+         class="input input-wide"
+         [disabled]="!tienePermisoLeer">
   
-  <select [(ngModel)]="filtroAnio" (change)="filtrarPagos()" class="input select-sm">
+  <select [(ngModel)]="filtroAnio" 
+          (change)="filtrarPagos()" 
+          class="input select-sm"
+          [disabled]="!tienePermisoLeer">
     <option value="todos">Todos los Pagos</option>
     <option *ngFor="let anio of aniosDisponibles" [value]="anio">{{ anio }}</option>
   </select>
 
-  <button class="btn-primary btn-sm" (click)="buscarCliente()">
+  <button class="btn-primary btn-sm" 
+          (click)="buscarCliente()"
+          [disabled]="!tienePermisoLeer">
     <i class="fas fa-search mr-1"></i> Buscar
   </button>
 </div>
 
-<!-- ❗ Mensajes de estado -->
-<div *ngIf="mensajeClienteNoEncontrado" class="alert-error mb-4">
-  <i class="fas fa-exclamation-circle"></i> Cliente no encontrado
-</div>
-
-<!-- ℹ️ Información del cliente -->
-<div *ngIf="clienteSeleccionado" class="bg-gray-100 p-4 rounded mb-4 shadow-md">
-  <h2 class="text-xl font-semibold">Información del Cliente</h2>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-    <div>
-      <p><strong>Nombre:</strong> {{ clienteSeleccionado.NombreCliente }} {{ clienteSeleccionado.ApellidoCliente }}</p>
-      <p><strong>Cédula:</strong> {{ clienteSeleccionado.Cedula }}</p>
-      <p><strong>Teléfono:</strong> {{ clienteSeleccionado.Telefono }}</p>
-    </div>
-    <div>
-      <p><strong>Plan:</strong> {{ clienteSeleccionado.plan?.nombre }} - {{ clienteSeleccionado.plan?.velocidad }}</p>
-      <p><strong>Tarifa:</strong> {{ clienteSeleccionado.tarifa?.valor | currency }}</p>
-      <p><strong>Sector:</strong> {{ clienteSeleccionado.sector?.nombre }}</p>
-    </div>
-    <div>
-      <p><strong>Fecha de Instalación:</strong> {{ clienteSeleccionado.FechaInstalacion | date:'yyyy-MM-dd' }}</p>
-      <p><strong>Estado:</strong> {{ clienteSeleccionado.estado?.Estado || 'No disponible' }}</p>
-      <p><strong>Tipo de Servicio:</strong> {{ clienteSeleccionado.tipoServicio?.Tipo }}</p>
-    </div>
+  <!-- ❗ Mensajes de estado -->
+  <div *ngIf="mensajeClienteNoEncontrado" class="alert-error mb-4">
+    <i class="fas fa-exclamation-circle"></i> Cliente no encontrado
   </div>
-  
-  <!-- Sección de Facturas -->
-  <div class="mt-4 flex flex-wrap gap-2">
-    <button 
-      (click)="generarFacturaPorPagar(clienteSeleccionado, 1)" 
-      class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center">
-      <i class="fas fa-file-invoice mr-2"></i> Factura por Pagar (1 mes)
-    </button>
+
+  <!-- ℹ️ Información del cliente -->
+  <div *ngIf="clienteSeleccionado && tienePermisoLeer" class="bg-gray-100 p-4 rounded mb-4 shadow-md">
+    <h2 class="text-xl font-semibold">Información del Cliente</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+      <div>
+        <p><strong>Nombre:</strong> {{ clienteSeleccionado.NombreCliente }} {{ clienteSeleccionado.ApellidoCliente }}</p>
+        <p><strong>Cédula:</strong> {{ clienteSeleccionado.Cedula }}</p>
+        <p><strong>Teléfono:</strong> {{ clienteSeleccionado.Telefono }}</p>
+      </div>
+      <div>
+        <p><strong>Plan:</strong> {{ clienteSeleccionado.plan?.nombre }} - {{ clienteSeleccionado.plan?.velocidad }}</p>
+        <p><strong>Tarifa:</strong> {{ clienteSeleccionado.tarifa?.valor | currency }}</p>
+        <p><strong>Sector:</strong> {{ clienteSeleccionado.sector?.nombre }}</p>
+      </div>
+      <div>
+        <p><strong>Fecha de Instalación:</strong> {{ clienteSeleccionado.FechaInstalacion | date:'yyyy-MM-dd' }}</p>
+        <p><strong>Estado:</strong> {{ clienteSeleccionado.estado?.Estado || 'No disponible' }}</p>
+        <p><strong>Tipo de Servicio:</strong> {{ clienteSeleccionado.tipoServicio?.Tipo }}</p>
+      </div>
+    </div>
     
-    <div class="relative">
+    <!-- Sección de Facturas - Solo visible con permiso -->
+    <div *ngIf="tienePermisoLeer" class="mt-4 flex flex-wrap gap-2">
       <button 
-        (click)="abrirSelectorMeses()" 
-        class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center">
-        <i class="fas fa-file-invoice mr-2"></i> Factura por Pagar (varios meses)
+        (click)="generarFacturaPorPagar(clienteSeleccionado, 1)" 
+        class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center"
+        [disabled]="!tienePermisoLeer">
+        <i class="fas fa-file-invoice mr-2"></i> Factura por Pagar (1 mes)
       </button>
       
-      <!-- Selector de meses -->
-      <div *ngIf="mostrarSelectorMeses" class="absolute mt-2 bg-white shadow-md rounded p-2 z-10 w-64">
-        <div class="mb-2">
-          <label class="block text-sm mb-1">Meses adeudados:</label>
-          <input 
-            type="number" 
-            min="1" 
-            max="12" 
-            [(ngModel)]="mesesSeleccionados" 
-            class="border rounded px-2 py-1 w-full"
-          />
-        </div>
+      <div class="relative">
         <button 
-          (click)="generarFacturaPorPagar(clienteSeleccionado, mesesSeleccionados); cerrarSelectorMeses()" 
-          class="w-full bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded">
-          Generar Factura
+          (click)="abrirSelectorMeses()" 
+          class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center"
+          [disabled]="!tienePermisoLeer">
+          <i class="fas fa-file-invoice mr-2"></i> Factura por Pagar (varios meses)
         </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 📜 Tabla de pagos -->
-<div *ngIf="pagosFiltrados.length > 0" class="overflow-x-auto">
-  <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
-    <thead class="bg-gray-200 text-gray-700">
-      <tr>
-        <th class="border px-4 py-2 text-left">ID Pago</th>
-        <th class="border px-4 py-2 text-left">Fecha</th>
-        <th class="border px-4 py-2 text-left">Mes</th>
-        <th class="border px-4 py-2 text-left">Año</th>
-        <th class="border px-4 py-2 text-right">Monto</th>
-        <th class="border px-4 py-2 text-left">Método</th>
-        <th class="border px-4 py-2 text-center">Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let pago of pagosFiltrados">
-        <td class="border px-4 py-2">{{ pago.ID }}</td>
-        <td class="border px-4 py-2">{{ pago.FechaPago | date:'yyyy-MM-dd' }}</td>
-        <td class="border px-4 py-2">{{ pago.Mes }}</td>
-        <td class="border px-4 py-2">{{ pago.Ano }}</td>
-        <td class="border px-4 py-2 text-right">{{ pago.Monto | currency }}</td>
-        <td class="border px-4 py-2">{{ pago.metodoPago?.Metodo || 'Desconocido' }}</td>
-        <td class="border px-4 py-2 text-center">
+        
+        <!-- Selector de meses -->
+        <div *ngIf="mostrarSelectorMeses" class="absolute mt-2 bg-white shadow-md rounded p-2 z-10 w-64">
+          <div class="mb-2">
+            <label class="block text-sm mb-1">Meses adeudados:</label>
+            <input 
+              type="number" 
+              min="1" 
+              max="12" 
+              [(ngModel)]="mesesSeleccionados" 
+              class="border rounded px-2 py-1 w-full"
+            />
+          </div>
           <button 
-            (click)="generarFacturaPagada(clienteSeleccionado, pago)" 
-            class="text-green-500 hover:text-green-700"
-            title="Generar factura pagada">
-            <i class="fas fa-receipt"></i>
+            (click)="generarFacturaPorPagar(clienteSeleccionado, mesesSeleccionados); cerrarSelectorMeses()" 
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded">
+            Generar Factura
           </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📜 Tabla de pagos CON INFORMACIÓN HISTÓRICA -->
+  <div *ngIf="pagosFiltrados.length > 0 && tienePermisoLeer" class="overflow-x-auto">
+    <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
+      <thead class="bg-gray-200 text-gray-700">
+        <tr>
+          <th class="border px-4 py-2 text-left">ID Pago</th>
+          <th class="border px-4 py-2 text-left">Fecha</th>
+          <th class="border px-4 py-2 text-left">Mes</th>
+          <th class="border px-4 py-2 text-left">Año</th>
+          <th class="border px-4 py-2 text-right">Monto</th>
+          <th class="border px-4 py-2 text-left">Plan</th>
+          <th class="border px-4 py-2 text-left">Tarifa</th>
+          <th class="border px-4 py-2 text-left">Método</th>
+          <th class="border px-4 py-2 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pago of pagosFiltrados">
+          <td class="border px-4 py-2">{{ pago.ID }}</td>
+          <td class="border px-4 py-2">{{ pago.FechaPago | date:'yyyy-MM-dd' }}</td>
+          <td class="border px-4 py-2">{{ pago.Mes }}</td>
+          <td class="border px-4 py-2">{{ pago.Ano }}</td>
+          <td class="border px-4 py-2 text-right">{{ pago.Monto | currency }}</td>
+          <td class="border px-4 py-2">
+            <span *ngIf="pago.planHistorico; else noPlanHistorico">
+              {{ pago.planHistorico.nombre }}
+              <small class="block text-gray-500">{{ pago.velocidad_contratada }}</small>
+            </span>
+            <ng-template #noPlanHistorico>
+              <span class="text-gray-400">Sin registro</span>
+            </ng-template>
+          </td>
+          <td class="border px-4 py-2">
+            <span *ngIf="pago.tarifaHistorica; else noTarifaHistorica" class="font-semibold text-green-600">
+              {{ pago.tarifaHistorica.valor | currency }}
+            </span>
+            <ng-template #noTarifaHistorica>
+              <span class="text-gray-400">Sin registro</span>
+            </ng-template>
+          </td>
+          <td class="border px-4 py-2">{{ pago.metodoPago?.Metodo || 'Desconocido' }}</td>
+          <td class="border px-4 py-2 text-center">
+            <button 
+              (click)="generarFacturaPagada(clienteSeleccionado, pago)" 
+              class="text-green-500 hover:text-green-700"
+              [disabled]="!tienePermisoLeer"
+              title="Generar factura pagada">
+              <i class="fas fa-receipt"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ⚠️ No hay pagos -->
+  <div *ngIf="clienteSeleccionado && pagosFiltrados.length === 0 && tienePermisoLeer" class="text-gray-500 text-center mt-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
+    <i class="fas fa-info-circle text-xl"></i> 
+    <p class="mt-2">No hay pagos registrados para este cliente.</p>
+  </div>
+
+  <!-- 📝 Formulario de Agregar Pago - Solo visible con permiso crear -->
+  <form *ngIf="clienteSeleccionado && tienePermisoCrear" [formGroup]="pagoForm" (ngSubmit)="agregarPago()" class="bg-white shadow-md rounded-lg p-6 mt-6">
+    <h2 class="text-xl font-semibold mb-4">Registrar Nuevo Pago</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="label">Fecha de Pago</label>
+        <input type="date" 
+               formControlName="FechaPago" 
+               class="input w-full"
+               [disabled]="!tienePermisoCrear">
+        <div *ngIf="pagoForm.get('FechaPago')?.invalid && pagoForm.get('FechaPago')?.touched" class="text-red-500 text-sm mt-1">
+          Fecha de pago es obligatoria
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Mes</label>
+        <select formControlName="Mes" 
+                class="input w-full"
+                [disabled]="!tienePermisoCrear">
+          <option value="" disabled>Seleccione mes</option>
+          <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
+        </select>
+        <div *ngIf="pagoForm.get('Mes')?.invalid && pagoForm.get('Mes')?.touched" class="text-red-500 text-sm mt-1">
+          Mes es obligatorio
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Año</label>
+        <select formControlName="Ano" 
+                class="input w-full"
+                [disabled]="!tienePermisoCrear">
+          <option value="" disabled>Seleccione año</option>
+          <option *ngFor="let anio of aniosDesde2024" [value]="anio">{{ anio }}</option>
+        </select>
+        <div *ngIf="pagoForm.get('Ano')?.invalid && pagoForm.get('Ano')?.touched" class="text-red-500 text-sm mt-1">
+          Año es obligatorio
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Monto</label>
+        <div class="flex items-center">
+          <span class="mr-2">$</span>
+          <input type="number" 
+                 formControlName="Monto" 
+                 class="input w-full" 
+                 [value]="clienteSeleccionado?.tarifa?.valor || ''"
+                 [disabled]="!tienePermisoCrear">
+        </div>
+        <div *ngIf="pagoForm.get('Monto')?.invalid && pagoForm.get('Monto')?.touched" class="text-red-500 text-sm mt-1">
+          Monto es obligatorio y debe ser mayor a 0
+        </div>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="label">Método de Pago</label>
+        <select formControlName="Metodo_de_PagoID" 
+                class="input w-full"
+                [disabled]="!tienePermisoCrear">
+          <option value="" disabled>Seleccione método de pago</option>
+          <option *ngFor="let metodo of metodosPago" [value]="metodo.ID">{{ metodo.Metodo }}</option>
+        </select>
+        <div *ngIf="pagoForm.get('Metodo_de_PagoID')?.invalid && pagoForm.get('Metodo_de_PagoID')?.touched" class="text-red-500 text-sm mt-1">
+          Método de pago es obligatorio
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button 
+        type="submit" 
+        class="btn-primary"
+        [disabled]="pagoForm.invalid || isSubmitting || !tienePermisoCrear">
+        {{ isSubmitting ? 'Procesando...' : 'Registrar Pago' }}
+      </button>
+    </div>
+
+    <div *ngIf="mensajeExito" class="alert-success mt-4">
+      <i class="fas fa-check-circle"></i> <span>Pago registrado correctamente</span>
+    </div>
+
+    <div *ngIf="mensajeError" class="alert-error mt-4">
+      <i class="fas fa-times-circle"></i> <span>{{ errorMessage || 'Error al agregar pago' }}</span>
+    </div>
+  </form>
+
+  <!-- ⚠️ Mensaje si no tiene permiso para crear pagos pero sí para ver -->
+  <div *ngIf="clienteSeleccionado && !tienePermisoCrear && tienePermisoLeer" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mt-6">
+    <p class="font-bold">Sin permisos para crear</p>
+    <p>No tienes permisos para registrar nuevos pagos. Solo puedes ver el historial.</p>
+  </div>
 </div>
-
-<!-- ⚠️ No hay pagos -->
-<div *ngIf="clienteSeleccionado && pagosFiltrados.length === 0" class="text-gray-500 text-center mt-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
-  <i class="fas fa-info-circle text-xl"></i> 
-  <p class="mt-2">No hay pagos registrados para este cliente.</p>
-</div>
-
-<!-- 📝 Formulario de Agregar Pago -->
-<form *ngIf="clienteSeleccionado" [formGroup]="pagoForm" (ngSubmit)="agregarPago()" class="bg-white shadow-md rounded-lg p-6 mt-6">
-  <h2 class="text-xl font-semibold mb-4">Registrar Nuevo Pago</h2>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-      <label class="label">Fecha de Pago</label>
-      <input type="date" formControlName="FechaPago" class="input w-full">
-      <div *ngIf="pagoForm.get('FechaPago')?.invalid && pagoForm.get('FechaPago')?.touched" class="text-red-500 text-sm mt-1">
-        Fecha de pago es obligatoria
-      </div>
-    </div>
-
-    <div>
-      <label class="label">Mes</label>
-      <select formControlName="Mes" class="input w-full">
-        <option value="" disabled>Seleccione mes</option>
-        <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
-      </select>
-      <div *ngIf="pagoForm.get('Mes')?.invalid && pagoForm.get('Mes')?.touched" class="text-red-500 text-sm mt-1">
-        Mes es obligatorio
-      </div>
-    </div>
-
-    <div>
-      <label class="label">Año</label>
-      <select formControlName="Ano" class="input w-full">
-        <option value="" disabled>Seleccione año</option>
-        <option *ngFor="let anio of aniosDesde2024" [value]="anio">{{ anio }}</option>
-      </select>
-      <div *ngIf="pagoForm.get('Ano')?.invalid && pagoForm.get('Ano')?.touched" class="text-red-500 text-sm mt-1">
-        Año es obligatorio
-      </div>
-    </div>
-
-    <div>
-      <label class="label">Monto</label>
-      <div class="flex items-center">
-        <span class="mr-2">$</span>
-        <input type="number" formControlName="Monto" class="input w-full" [value]="clienteSeleccionado?.tarifa?.valor || ''">
-      </div>
-      <div *ngIf="pagoForm.get('Monto')?.invalid && pagoForm.get('Monto')?.touched" class="text-red-500 text-sm mt-1">
-        Monto es obligatorio y debe ser mayor a 0
-      </div>
-    </div>
-
-    <div class="md:col-span-2">
-      <label class="label">Método de Pago</label>
-      <select formControlName="Metodo_de_PagoID" class="input w-full">
-        <option value="" disabled>Seleccione método de pago</option>
-        <option *ngFor="let metodo of metodosPago" [value]="metodo.ID">{{ metodo.Metodo }}</option>
-      </select>
-      <div *ngIf="pagoForm.get('Metodo_de_PagoID')?.invalid && pagoForm.get('Metodo_de_PagoID')?.touched" class="text-red-500 text-sm mt-1">
-        Método de pago es obligatorio
-      </div>
-    </div>
-  </div>
-
-  <div class="mt-6 flex justify-end">
-    <button 
-      type="submit" 
-      class="btn-primary"
-      [disabled]="pagoForm.invalid || isSubmitting">
-      {{ isSubmitting ? 'Procesando...' : 'Registrar Pago' }}
-    </button>
-  </div>
-
-  <div *ngIf="mensajeExito" class="alert-success mt-4">
-    <i class="fas fa-check-circle"></i> <span>Pago registrado correctamente</span>
-  </div>
-
-  <div *ngIf="mensajeError" class="alert-error mt-4">
-    <i class="fas fa-times-circle"></i> <span>{{ errorMessage || 'Error al agregar pago' }}</span>
-  </div>
-</form>

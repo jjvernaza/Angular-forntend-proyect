@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
 // ✅ Importaciones de componentes existentes
 import { DashboardComponent } from './dashboard/dashboard.component';
@@ -20,37 +19,154 @@ import { PermisosComponent } from './permisos/permisos.component';
 import { TiposServicioComponent } from './tipos-servicio/tipos-servicio.component';
 import { EstadosComponent } from './estados/estados.component';
 
+// ✅ Importaciones de Guards
 import { AuthGuard } from './auth.guard';
+import { PermissionGuard } from './guards/permission.guard';
+import { AdministrarUsuariosComponent } from './administrar-usuarios/administrar-usuarios.component';
+import { BitacoraComponent } from './bitacora/bitacora.component';
 
 export const routes: Routes = [
-  // Ruta raíz - redirecciona al login
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  // Ruta raíz - redirecciona al dashboard
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   
-  // Ruta de login
+  // Ruta de login (pública)
   { path: 'login', component: LoginComponent },
   
-  // Rutas protegidas con AuthGuard
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
-  { path: 'crear-usuario', component: CrearUsuarioComponent, canActivate: [AuthGuard] },
-  { path: 'buscar-cliente', component: BuscarClienteComponent, canActivate: [AuthGuard] },
-  { path: 'agregar-cliente', component: AgregarClienteComponent, canActivate: [AuthGuard] },
-  { path: 'morosos', component: MorososComponent, canActivate: [AuthGuard] },
-  { path: 'agregar-pago', component: AgregarPagoComponent, canActivate: [AuthGuard] },
+  // ============================================
+  // RUTAS PROTEGIDAS CON PERMISOS
+  // ============================================
   
-  // Rutas de administración
-  { path: 'planes', component: PlanesComponent, canActivate: [AuthGuard] },
-  { path: 'sectores', component: SectoresComponent, canActivate: [AuthGuard] },
-  { path: 'tarifas', component: TarifasComponent, canActivate: [AuthGuard] },
-  { path: 'permisos', component: PermisosComponent, canActivate: [AuthGuard] },
-  { path: 'tipos-servicio', component: TiposServicioComponent, canActivate: [AuthGuard] },
-  { path: 'estados', component: EstadosComponent, canActivate: [AuthGuard] },
+  // Dashboard - Accesible para todos los usuarios autenticados
+  { 
+    path: 'dashboard', 
+    component: DashboardComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['dashboard.ver'] }
+  },
   
-  // Ruta para cualquier ruta no definida anteriormente - redirecciona al login
-  { path: '**', redirectTo: '/login' }
-];
+  // ============================================
+  // GESTIÓN DE USUARIOS
+  // ============================================
+  { 
+    path: 'crear-usuario', 
+    component: CrearUsuarioComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['usuarios.crear'] }
+  },
 
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {}
+  { 
+  path: 'administrar-usuarios', 
+  component: AdministrarUsuariosComponent, 
+  canActivate: [AuthGuard, PermissionGuard],
+  data: { permissions: ['usuarios.leer'] }
+  },
+  
+  // ============================================
+  // GESTIÓN DE CLIENTES
+  // ============================================
+  { 
+    path: 'buscar-cliente', 
+    component: BuscarClienteComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['clientes.leer', 'clientes.buscar_avanzado'] }
+  },
+  { 
+    path: 'agregar-cliente', 
+    component: AgregarClienteComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['clientes.crear'] }
+  },
+  
+  // ============================================
+  // GESTIÓN DE MOROSOS
+  // ============================================
+  { 
+    path: 'morosos', 
+    component: MorososComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['morosos.ver', 'morosos.filtrar', 'morosos.exportar', 'morosos.gestionar'] }
+  },
+  
+  // ============================================
+  // GESTIÓN DE PAGOS
+  // ============================================
+  { 
+    path: 'agregar-pago', 
+    component: AgregarPagoComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['pagos.crear', 'pagos.leer'] }
+  },
+  
+  // ============================================
+  // ADMINISTRACIÓN - PLANES
+  // ============================================
+  { 
+    path: 'planes', 
+    component: PlanesComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['planes.leer'] }
+  },
+  
+  // ============================================
+  // ADMINISTRACIÓN - SECTORES
+  // ============================================
+  { 
+    path: 'sectores', 
+    component: SectoresComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['sectores.leer'] }
+  },
+  
+  // ============================================
+  // ADMINISTRACIÓN - TARIFAS
+  // ============================================
+  { 
+    path: 'tarifas', 
+    component: TarifasComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['tarifas.leer'] }
+  },
+  
+  // ============================================
+  // ADMINISTRACIÓN - PERMISOS
+  // ============================================
+  { 
+    path: 'permisos', 
+    component: PermisosComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['usuarios.asignar_permisos'] }
+  },
+  
+  // ============================================
+  // ADMINISTRACIÓN - TIPOS DE SERVICIO
+  // ============================================
+  { 
+    path: 'tipos-servicio', 
+    component: TiposServicioComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['servicios.leer'] }
+  },
+  
+  // ============================================
+  // ADMINISTRACIÓN - ESTADOS
+  // ============================================
+  { 
+    path: 'estados', 
+    component: EstadosComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['estados.leer'] }
+  },
+
+  // ============================================
+  // ADMINISTRACIÓN - BITÁCORA
+  // ============================================
+  { 
+    path: 'bitacora', 
+    component: BitacoraComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['bitacora.leer'] }
+  },
+  
+  // Ruta para cualquier ruta no definida - redirecciona al dashboard
+  { path: '**', redirectTo: '/dashboard' }
+];

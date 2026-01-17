@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-estados',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './estados.component.html',
   styleUrls: ['./estados.component.css']
 })
@@ -38,27 +40,65 @@ export class EstadosComponent implements OnInit {
     { nombre: 'Morado (Mantenimiento)', valor: '#8b5cf6' },
     { nombre: 'Gris (Pendiente)', valor: '#6b7280' }
   ];
+
+  // ✅ Variables de permisos
+  tienePermisoLeer: boolean = false;
+  tienePermisoCrear: boolean = false;
+  tienePermisoActualizar: boolean = false;
+  tienePermisoEliminar: boolean = false;
   
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService
+  ) {}
   
   ngOnInit(): void {
-    this.cargarEstados();
+    // ✅ Verificar permisos
+    this.verificarPermisos();
+
+    // ✅ Solo cargar si tiene permiso de lectura
+    if (this.tienePermisoLeer) {
+      this.cargarEstados();
+    }
+  }
+
+  private verificarPermisos(): void {
+    this.tienePermisoLeer = this.authService.hasPermission('estados.leer');
+    this.tienePermisoCrear = this.authService.hasPermission('estados.crear');
+    this.tienePermisoActualizar = this.authService.hasPermission('estados.actualizar');
+    this.tienePermisoEliminar = this.authService.hasPermission('estados.eliminar');
+    
+    console.log('🔐 Permisos en estados:');
+    console.log('   Leer:', this.tienePermisoLeer);
+    console.log('   Crear:', this.tienePermisoCrear);
+    console.log('   Actualizar:', this.tienePermisoActualizar);
+    console.log('   Eliminar:', this.tienePermisoEliminar);
   }
   
   cargarEstados(): void {
+    if (!this.tienePermisoLeer) {
+      console.log('❌ Sin permisos para leer estados');
+      return;
+    }
+
     this.apiService.getEstados().subscribe(
       (data: any) => {
-        console.log('Estados recibidos:', data);
+        console.log('✅ Estados recibidos:', data);
         this.estados = data;
       },
       (error) => {
-        console.error('Error al obtener estados:', error);
+        console.error('❌ Error al obtener estados:', error);
         alert('Error al cargar estados: ' + (error.error?.message || 'Error desconocido'));
       }
     );
   }
   
   abrirModalAgregar(): void {
+    if (!this.tienePermisoCrear) {
+      alert('No tienes permisos para crear estados.');
+      return;
+    }
+
     this.esEdicion = false;
     this.estadoForm = {
       ID: null,
@@ -69,6 +109,11 @@ export class EstadosComponent implements OnInit {
   }
   
   abrirModalEditar(estado: any): void {
+    if (!this.tienePermisoActualizar) {
+      alert('No tienes permisos para editar estados.');
+      return;
+    }
+
     this.esEdicion = true;
     this.estadoForm = {
       ID: estado.ID,
@@ -85,7 +130,13 @@ export class EstadosComponent implements OnInit {
     }
     
     if (this.esEdicion) {
-      // Actualizar
+      // ✅ Verificar permiso para actualizar
+      if (!this.tienePermisoActualizar) {
+        alert('No tienes permisos para actualizar estados.');
+        return;
+      }
+
+      console.log('📝 Actualizando estado:', this.estadoForm);
       this.apiService.updateEstado(this.estadoForm.ID!, this.estadoForm).subscribe(
         () => {
           this.modalAbierto = false;
@@ -93,12 +144,18 @@ export class EstadosComponent implements OnInit {
           alert('Estado actualizado correctamente');
         },
         (error) => {
-          console.error('Error al actualizar:', error);
+          console.error('❌ Error al actualizar:', error);
           alert('Error al actualizar el estado: ' + (error.error?.message || 'Error desconocido'));
         }
       );
     } else {
-      // Crear
+      // ✅ Verificar permiso para crear
+      if (!this.tienePermisoCrear) {
+        alert('No tienes permisos para crear estados.');
+        return;
+      }
+
+      console.log('➕ Creando estado:', this.estadoForm);
       this.apiService.createEstado(this.estadoForm).subscribe(
         () => {
           this.modalAbierto = false;
@@ -106,7 +163,7 @@ export class EstadosComponent implements OnInit {
           alert('Estado creado correctamente');
         },
         (error) => {
-          console.error('Error al crear:', error);
+          console.error('❌ Error al crear:', error);
           alert('Error al crear el estado: ' + (error.error?.message || 'Error desconocido'));
         }
       );
@@ -114,13 +171,24 @@ export class EstadosComponent implements OnInit {
   }
   
   abrirModalEliminar(estado: any): void {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar estados.');
+      return;
+    }
+
     this.estadoEliminarId = estado.ID;
     this.estadoEliminarNombre = estado.Estado;
     this.modalEliminar = true;
   }
   
   eliminarEstado(): void {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar estados.');
+      return;
+    }
+
     if (this.estadoEliminarId) {
+      console.log('🗑️ Eliminando estado:', this.estadoEliminarId);
       this.apiService.deleteEstado(this.estadoEliminarId).subscribe(
         () => {
           this.modalEliminar = false;
@@ -128,7 +196,7 @@ export class EstadosComponent implements OnInit {
           alert('Estado eliminado correctamente');
         },
         (error) => {
-          console.error('Error al eliminar:', error);
+          console.error('❌ Error al eliminar:', error);
           alert('Error al eliminar el estado: ' + (error.error?.message || 'Error desconocido'));
         }
       );

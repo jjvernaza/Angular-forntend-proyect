@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -12,38 +13,80 @@ import { FormsModule } from '@angular/forms';
 })
 export class BuscarClienteComponent implements OnInit {
   clientes: any[] = [];
+  clientesSinFiltrar: any[] = [];  // ✅ Para guardar todos los clientes
   tiposServicio: any[] = [];
   estados: any[] = [];
   planes: any[] = [];
   sectores: any[] = [];
   tarifas: any[] = [];
   
-  filtro = { id: '', nombre: '', cedula: '', ubicacion: '' };
+  // ✅ Filtros actualizados con apellido y teléfono
+  filtro = { 
+    id: '', 
+    nombre: '', 
+    apellido: '',  // ✅ NUEVO
+    cedula: '', 
+    telefono: '',  // ✅ NUEVO
+    ubicacion: '' 
+  };
   
   modalEditar = false;
   modalEliminar = false;
   clienteEdit: any = {};
   clienteEliminarId: number | null = null;
   
-  constructor(private apiService: ApiService) {}
+  // Variables de permisos
+  tienePermisoLeer: boolean = false;
+  tienePermisoActualizar: boolean = false;
+  tienePermisoEliminar: boolean = false;
+  
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService
+  ) {}
   
   ngOnInit(): void {
-    this.cargarClientes();
-    this.cargarTiposServicio();
-    this.cargarEstados();
-    this.cargarPlanes();
-    this.cargarSectores();
-    this.cargarTarifas();
+    this.verificarPermisos();
+    
+    if (this.tienePermisoLeer) {
+      this.cargarClientes();
+      this.cargarTiposServicio();
+      this.cargarEstados();
+      this.cargarPlanes();
+      this.cargarSectores();
+      this.cargarTarifas();
+    }
+  }
+  
+  private verificarPermisos(): void {
+    this.tienePermisoLeer = this.authService.hasAnyPermission(['clientes.leer', 'clientes.buscar_avanzado']);
+    this.tienePermisoActualizar = this.authService.hasPermission('clientes.actualizar');
+    this.tienePermisoEliminar = this.authService.hasPermission('clientes.eliminar');
+    
+    console.log('🔐 Permisos en buscar-cliente:');
+    console.log('   Leer:', this.tienePermisoLeer);
+    console.log('   Actualizar:', this.tienePermisoActualizar);
+    console.log('   Eliminar:', this.tienePermisoEliminar);
+  }
+  
+  mostrarMensajePermisos(accion: string): void {
+    alert(`No tienes permisos para ${accion} clientes.`);
   }
   
   cargarClientes(): void {
+    if (!this.tienePermisoLeer) {
+      console.log('❌ Sin permiso para cargar clientes');
+      return;
+    }
+    
     this.apiService.getClientes().subscribe(
       (data: any) => {
-        console.log('Datos de clientes recibidos:', data);
-        this.clientes = data;
+        console.log('✅ Clientes cargados:', data.length);
+        this.clientesSinFiltrar = data;  // ✅ Guardar copia completa
+        this.clientes = data;  // Mostrar todos inicialmente
       },
       (error) => {
-        console.error('Error al obtener clientes:', error);
+        console.error('❌ Error al obtener clientes:', error);
         alert('Error al cargar clientes: ' + (error.error?.message || 'Error desconocido'));
       }
     );
@@ -56,7 +99,6 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener tipos de servicio:', error);
-        alert('Error al cargar tipos de servicio');
       }
     );
   }
@@ -64,12 +106,10 @@ export class BuscarClienteComponent implements OnInit {
   cargarEstados(): void {
     this.apiService.getEstados().subscribe(
       (data: any) => {
-        console.log('Estados recibidos:', data);
         this.estados = data;
       },
       (error) => {
         console.error('Error al obtener estados:', error);
-        alert('Error al cargar estados');
       }
     );
   }
@@ -77,12 +117,10 @@ export class BuscarClienteComponent implements OnInit {
   cargarPlanes(): void {
     this.apiService.getPlanes().subscribe(
       (data: any) => {
-        console.log('Planes recibidos:', data);
         this.planes = data;
       },
       (error) => {
         console.error('Error al obtener planes:', error);
-        alert('Error al cargar planes');
       }
     );
   }
@@ -94,7 +132,6 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener sectores:', error);
-        alert('Error al cargar sectores');
       }
     );
   }
@@ -106,31 +143,70 @@ export class BuscarClienteComponent implements OnInit {
       },
       (error) => {
         console.error('Error al obtener tarifas:', error);
-        alert('Error al cargar tarifas');
       }
     );
   }
   
+  // ✅ Función de búsqueda mejorada con apellido y teléfono
   buscarClientes() {
-    this.apiService.getClientes().subscribe(
-      (data: any[]) => {
-        this.clientes = data.filter((cliente: any) =>
-          (this.filtro.id ? cliente.ID.toString() === this.filtro.id.trim() : true) &&
-          (this.filtro.nombre ? 
-            (cliente.NombreCliente?.toLowerCase().includes(this.filtro.nombre.toLowerCase()) ||
-             cliente.ApellidoCliente?.toLowerCase().includes(this.filtro.nombre.toLowerCase())) : true) &&
-          (this.filtro.cedula ? cliente.Cedula?.trim() === this.filtro.cedula.trim() : true) &&
-          (this.filtro.ubicacion ? cliente.Ubicacion?.toLowerCase().includes(this.filtro.ubicacion.toLowerCase().trim()) : true)
-        );
-      },
-      (error) => {
-        console.error('Error al filtrar clientes:', error);
-        alert('Error al filtrar clientes: ' + (error.error?.message || 'Error desconocido'));
-      }
-    );
+    if (!this.tienePermisoLeer) {
+      alert('No tienes permisos para buscar clientes.');
+      return;
+    }
+    
+    console.log('🔍 Aplicando filtros:', this.filtro);
+    
+    this.clientes = this.clientesSinFiltrar.filter((cliente: any) => {
+      // Filtro por ID
+      const cumpleID = this.filtro.id ? 
+        cliente.ID.toString() === this.filtro.id.trim() : true;
+      
+      // Filtro por Nombre
+      const cumpleNombre = this.filtro.nombre ? 
+        cliente.NombreCliente?.toLowerCase().includes(this.filtro.nombre.toLowerCase().trim()) : true;
+      
+      // ✅ NUEVO: Filtro por Apellido
+      const cumpleApellido = this.filtro.apellido ? 
+        cliente.ApellidoCliente?.toLowerCase().includes(this.filtro.apellido.toLowerCase().trim()) : true;
+      
+      // Filtro por Cédula
+      const cumpleCedula = this.filtro.cedula ? 
+        cliente.Cedula?.trim() === this.filtro.cedula.trim() : true;
+      
+      // ✅ NUEVO: Filtro por Teléfono
+      const cumpleTelefono = this.filtro.telefono ? 
+        cliente.Telefono?.includes(this.filtro.telefono.trim()) : true;
+      
+      // Filtro por Ubicación
+      const cumpleUbicacion = this.filtro.ubicacion ? 
+        cliente.Ubicacion?.toLowerCase().includes(this.filtro.ubicacion.toLowerCase().trim()) : true;
+      
+      return cumpleID && cumpleNombre && cumpleApellido && cumpleCedula && cumpleTelefono && cumpleUbicacion;
+    });
+    
+    console.log(`✅ Resultados de búsqueda: ${this.clientes.length} de ${this.clientesSinFiltrar.length}`);
+  }
+  
+  // ✅ NUEVA: Función para limpiar filtros
+  limpiarFiltros(): void {
+    this.filtro = { 
+      id: '', 
+      nombre: '', 
+      apellido: '', 
+      cedula: '', 
+      telefono: '', 
+      ubicacion: '' 
+    };
+    this.clientes = [...this.clientesSinFiltrar];  // Restaurar todos los clientes
+    console.log('🧹 Filtros limpiados');
   }
   
   abrirModalEditar(cliente: any) {
+    if (!this.tienePermisoActualizar) {
+      alert('No tienes permisos para editar clientes.');
+      return;
+    }
+    
     this.clienteEdit = { 
       ...cliente,
       plan_mb_id: cliente.plan_mb_id || cliente.plan?.id,
@@ -149,6 +225,11 @@ export class BuscarClienteComponent implements OnInit {
   }
   
   guardarEdicion() {
+    if (!this.tienePermisoActualizar) {
+      alert('No tienes permisos para actualizar clientes.');
+      return;
+    }
+    
     const clienteParaActualizar = { ...this.clienteEdit };
     
     if (!clienteParaActualizar.plan_mb_id) clienteParaActualizar.plan_mb_id = null;
@@ -157,30 +238,44 @@ export class BuscarClienteComponent implements OnInit {
     if (!clienteParaActualizar.EstadoID) clienteParaActualizar.EstadoID = null;
     if (!clienteParaActualizar.TipoServicioID) clienteParaActualizar.TipoServicioID = null;
     
+    console.log('💾 Actualizando cliente:', clienteParaActualizar);
+    
     this.apiService.updateCliente(this.clienteEdit.ID, clienteParaActualizar).subscribe(
       () => {
+        console.log('✅ Cliente actualizado');
         this.modalEditar = false;
         this.cargarClientes();
         alert('Cliente actualizado correctamente');
       },
       (error) => {
-        console.error('Error al actualizar cliente:', error);
+        console.error('❌ Error al actualizar cliente:', error);
         alert('Error al actualizar cliente: ' + (error.error?.message || 'Error desconocido'));
       }
     );
   }
   
   abrirModalEliminar(id: number) {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar clientes.');
+      return;
+    }
+    
     if (id == null || id <= 0) {
       console.error('ID de cliente inválido:', id);
       alert('Error: ID de cliente inválido');
       return;
     }
+    
     this.clienteEliminarId = id;
     this.modalEliminar = true;
   }
   
   eliminarCliente() {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar clientes.');
+      return;
+    }
+    
     if (this.clienteEliminarId == null || this.clienteEliminarId <= 0) {
       console.error('No se puede eliminar: ID de cliente no válido:', this.clienteEliminarId);
       alert('Error: ID de cliente no válido');
@@ -188,15 +283,18 @@ export class BuscarClienteComponent implements OnInit {
       return;
     }
     
+    console.log('🗑️ Eliminando cliente ID:', this.clienteEliminarId);
+    
     this.apiService.deleteCliente(this.clienteEliminarId).subscribe(
       () => {
+        console.log('✅ Cliente eliminado');
         this.modalEliminar = false;
         this.clienteEliminarId = null;
         this.cargarClientes();
         alert('Cliente eliminado correctamente');
       },
       (error) => {
-        console.error('Error al eliminar cliente:', error);
+        console.error('❌ Error al eliminar cliente:', error);
         let errorMessage = 'Error al eliminar cliente';
         if (error.status === 500) {
           errorMessage += ': Error interno del servidor';
@@ -209,6 +307,7 @@ export class BuscarClienteComponent implements OnInit {
           errorMessage += ': Permiso denegado';
         }
         alert(errorMessage);
+        this.modalEliminar = false;
       }
     );
   }

@@ -1,0 +1,472 @@
+<div class="p-6">
+  <!-- ✅ Verificar permiso para acceder al módulo -->
+  <div *ngIf="!tienePermisoLeer" 
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para acceder a este módulo.</p>
+    <button routerLink="/dashboard" class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <!-- ✅ Contenido del módulo -->
+  <div *ngIf="tienePermisoLeer">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-800">Bitácora del Sistema</h1>
+        <p class="text-gray-600 mt-1">Registro de todas las acciones realizadas en el sistema</p>
+      </div>
+      <div class="flex gap-2">
+        <button 
+          *ngIf="tienePermisoEstadisticas"
+          (click)="cargarEstadisticas()"
+          class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
+          <i class="fas fa-chart-bar"></i>
+          Estadísticas
+        </button>
+        <button 
+          *ngIf="tienePermisoExportar"
+          (click)="exportarExcel()"
+          [disabled]="isExporting"
+          class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center gap-2 disabled:bg-gray-400">
+          <i class="fas fa-file-excel"></i>
+          <span *ngIf="!isExporting">Exportar Excel</span>
+          <span *ngIf="isExporting">Exportando...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div *ngIf="successMessage" class="mb-4 p-3 bg-green-100 text-green-700 rounded-md flex items-center gap-2">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-red-100 text-red-700 rounded-md flex items-center gap-2">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <!-- Búsqueda -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-search"></i> Buscar
+          </label>
+          <input 
+            type="text" 
+            [(ngModel)]="filtroBusqueda"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Descripción...">
+        </div>
+
+        <!-- Filtro por usuario -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-user"></i> Usuario
+          </label>
+          <select 
+            [(ngModel)]="filtroUsuario"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Todos los usuarios</option>
+            <option *ngFor="let usuario of usuarios" [value]="usuario.ID">
+              {{ usuario.Nombre }} {{ usuario.Apellidos }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtro por módulo -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-cube"></i> Módulo
+          </label>
+          <select 
+            [(ngModel)]="filtroModulo"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Todos los módulos</option>
+            <option *ngFor="let modulo of modulos" [value]="modulo">
+              {{ modulo }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtro por acción -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-bolt"></i> Acción
+          </label>
+          <select 
+            [(ngModel)]="filtroAccion"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Todas las acciones</option>
+            <option *ngFor="let accion of acciones" [value]="accion">
+              {{ accion }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Fecha inicio -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-calendar-alt"></i> Fecha Inicio
+          </label>
+          <input 
+            type="date" 
+            [(ngModel)]="filtroFechaInicio"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Fecha fin -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <i class="fas fa-calendar-alt"></i> Fecha Fin
+          </label>
+          <input 
+            type="date" 
+            [(ngModel)]="filtroFechaFin"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+
+      <!-- Botones de filtros -->
+      <div class="mt-4 flex gap-2">
+        <button 
+          (click)="aplicarFiltros()"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
+          <i class="fas fa-filter"></i>
+          Aplicar Filtros
+        </button>
+        <button 
+          (click)="limpiarFiltros()"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center gap-2">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+
+      <!-- Resultados -->
+      <div class="mt-3 text-sm text-gray-600">
+        Mostrando {{ registros.length }} de {{ total }} registros
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Tabla de registros -->
+    <div *ngIf="!isLoading" class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha/Hora</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Módulo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let registro of registros" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ formatearFecha(registro.fecha_hora) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-xs font-bold">
+                      {{ registro.usuario?.Nombre?.charAt(0) }}{{ registro.usuario?.Apellidos?.charAt(0) }}
+                    </span>
+                  </div>
+                  <div class="ml-3">
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ registro.usuario?.Nombre }} {{ registro.usuario?.Apellidos }}
+                    </div>
+                    <div class="text-xs text-gray-500">{{ registro.usuario?.User }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span [ngClass]="getColorAccion(registro.accion)"
+                      class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full items-center gap-1">
+                  <i class="fas" [ngClass]="getIconoAccion(registro.accion)"></i>
+                  {{ registro.accion }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <span class="font-medium">{{ registro.modulo }}</span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-500">
+                <div class="max-w-xs truncate" [title]="registro.descripcion">
+                  {{ registro.descripcion }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ registro.ip_address }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button 
+                  (click)="verDetalle(registro)"
+                  class="text-blue-600 hover:text-blue-900"
+                  title="Ver detalles">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Sin resultados -->
+        <div *ngIf="registros.length === 0" class="text-center py-12 text-gray-500">
+          <i class="fas fa-clipboard-list text-5xl mb-4"></i>
+          <p class="text-lg">No se encontraron registros con los filtros aplicados</p>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div *ngIf="totalPaginas > 1" class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button 
+            (click)="cambiarPagina(paginaActual - 1)"
+            [disabled]="paginaActual === 1"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+            Anterior
+          </button>
+          <button 
+            (click)="cambiarPagina(paginaActual + 1)"
+            [disabled]="paginaActual === totalPaginas"
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+            Siguiente
+          </button>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-gray-700">
+              Mostrando
+              <span class="font-medium">{{ offset + 1 }}</span>
+              a
+              <span class="font-medium">{{ Math.min(offset + limit, total) }}</span>
+              de
+              <span class="font-medium">{{ total }}</span>
+              resultados
+            </p>
+          </div>
+          <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <button 
+                (click)="cambiarPagina(paginaActual - 1)"
+                [disabled]="paginaActual === 1"
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              
+              <button 
+                *ngFor="let pagina of [].constructor(totalPaginas); let i = index"
+                (click)="cambiarPagina(i + 1)"
+                [class.bg-blue-50]="paginaActual === i + 1"
+                [class.border-blue-500]="paginaActual === i + 1"
+                [class.text-blue-600]="paginaActual === i + 1"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                {{ i + 1 }}
+              </button>
+              
+              <button 
+                (click)="cambiarPagina(paginaActual + 1)"
+                [disabled]="paginaActual === totalPaginas"
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle -->
+<div *ngIf="mostrarModalDetalle" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Detalle del Registro</h2>
+        <button (click)="cerrarModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Información básica -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">ID</label>
+            <p class="mt-1 text-sm text-gray-900">{{ registroSeleccionado.id }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha y Hora</label>
+            <p class="mt-1 text-sm text-gray-900">{{ formatearFecha(registroSeleccionado.fecha_hora) }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Usuario</label>
+            <p class="mt-1 text-sm text-gray-900">
+              {{ registroSeleccionado.usuario?.Nombre }} {{ registroSeleccionado.usuario?.Apellidos }}
+              <span class="text-gray-500">({{ registroSeleccionado.usuario?.User }})</span>
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Acción</label>
+            <p class="mt-1">
+              <span [ngClass]="getColorAccion(registroSeleccionado.accion)"
+                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
+                {{ registroSeleccionado.accion }}
+              </span>
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Módulo</label>
+            <p class="mt-1 text-sm text-gray-900">{{ registroSeleccionado.modulo }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Dirección IP</label>
+            <p class="mt-1 text-sm text-gray-900">{{ registroSeleccionado.ip_address }}</p>
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Descripción</label>
+          <p class="mt-1 text-sm text-gray-900">{{ registroSeleccionado.descripcion }}</p>
+        </div>
+
+        <!-- User Agent -->
+        <div *ngIf="registroSeleccionado.user_agent">
+          <label class="block text-sm font-medium text-gray-700">Navegador/Dispositivo</label>
+          <p class="mt-1 text-xs text-gray-600 break-all">{{ registroSeleccionado.user_agent }}</p>
+        </div>
+
+        <!-- Datos anteriores -->
+        <div *ngIf="registroSeleccionado.datos_anteriores">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Datos Anteriores</label>
+          <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto">{{ registroSeleccionado.datos_anteriores | json }}</pre>
+        </div>
+
+        <!-- Datos nuevos -->
+        <div *ngIf="registroSeleccionado.datos_nuevos">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Datos Nuevos</label>
+          <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto">{{ registroSeleccionado.datos_nuevos | json }}</pre>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button 
+          (click)="cerrarModal()"
+          class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Estadísticas -->
+<div *ngIf="mostrarEstadisticas" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-screen overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Estadísticas de Bitácora</h2>
+        <button (click)="cerrarEstadisticas()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Estado de carga -->
+      <div *ngIf="isLoadingEstadisticas" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+
+      <!-- Estadísticas -->
+      <div *ngIf="!isLoadingEstadisticas && estadisticas" class="space-y-6">
+        <!-- Total de acciones -->
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <div class="text-sm text-blue-600 font-medium">Total de Acciones</div>
+          <div class="text-3xl font-bold text-blue-900">{{ estadisticas.totalAcciones }}</div>
+        </div>
+
+        <!-- Acciones por módulo -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Acciones por Módulo</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div *ngFor="let item of estadisticas.accionesPorModulo" 
+                 class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+              <span class="font-medium">{{ item.modulo }}</span>
+              <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">{{ item.total }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones por tipo -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Acciones por Tipo</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div *ngFor="let item of estadisticas.accionesPorTipo" 
+                 class="bg-gray-50 p-3 rounded-lg text-center">
+              <div class="text-2xl font-bold text-gray-900">{{ item.total }}</div>
+              <div class="text-sm text-gray-600">{{ item.accion }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Usuarios más activos -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Usuarios Más Activos</h3>
+          <div class="space-y-2">
+            <div *ngFor="let item of estadisticas.usuariosMasActivos; let i = index" 
+                 class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                {{ i + 1 }}
+              </div>
+              <div class="flex-1">
+                <div class="font-medium">{{ item['usuario.Nombre'] }} {{ item['usuario.Apellidos'] }}</div>
+                <div class="text-sm text-gray-600">{{ item['usuario.User'] }}</div>
+              </div>
+              <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                {{ item.total }} acciones
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actividad por día (últimos 7 días) -->
+        <div *ngIf="estadisticas.actividadPorDia && estadisticas.actividadPorDia.length > 0">
+          <h3 class="text-lg font-semibold mb-3">Actividad por Día (Últimos 7 días)</h3>
+          <div class="space-y-2">
+            <div *ngFor="let item of estadisticas.actividadPorDia" 
+                 class="flex items-center gap-3">
+              <div class="w-32 text-sm text-gray-600">{{ item.fecha }}</div>
+              <div class="flex-1 bg-gray-200 rounded-full h-6">
+                <div class="bg-blue-500 h-6 rounded-full flex items-center justify-end pr-2"
+                     [style.width.%]="(item.total / estadisticas.totalAcciones) * 100">
+                  <span class="text-white text-xs font-medium">{{ item.total }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button 
+          (click)="cerrarEstadisticas()"
+          class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

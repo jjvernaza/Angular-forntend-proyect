@@ -1,9 +1,21 @@
 <div class="p-6">
+  <!-- ✅ Verificar permiso para acceder al módulo -->
+  <div *ngIf="!tienePermisoLeer && !tienePermisoCrear && !tienePermisoActualizar && !tienePermisoEliminar && !tienePermisoRevocar" 
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p class="font-bold">Acceso Denegado</p>
+    <p>No tienes permisos para acceder a este módulo.</p>
+    <button routerLink="/dashboard" class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+      Volver al Dashboard
+    </button>
+  </div>
+
+  <!-- ✅ Contenido del módulo - Solo visible con permisos -->
+  <div *ngIf="tienePermisoLeer || tienePermisoCrear || tienePermisoActualizar || tienePermisoEliminar || tienePermisoRevocar">
     <h1 class="text-3xl font-bold mb-6">Administración de Permisos</h1>
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Formulario -->
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <!-- Formulario - Solo visible si puede crear o actualizar -->
+      <div *ngIf="tienePermisoCrear || tienePermisoActualizar" class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-semibold mb-4">
           {{ modoEdicion ? 'Editar Permiso' : 'Nuevo Permiso' }}
         </h2>
@@ -17,6 +29,7 @@
               formControlName="nombre" 
               class="w-full border border-gray-300 rounded-md p-2"
               [ngClass]="{'border-red-500': submitted && f['nombre'].errors}"
+              [disabled]="modoEdicion ? !tienePermisoActualizar : !tienePermisoCrear"
             >
             <div *ngIf="submitted && f['nombre'].errors" class="text-red-500 text-sm mt-1">
               <div *ngIf="f['nombre'].errors['required']">El nombre es obligatorio</div>
@@ -31,6 +44,7 @@
               rows="3" 
               class="w-full border border-gray-300 rounded-md p-2"
               placeholder="Descripción del permiso"
+              [disabled]="modoEdicion ? !tienePermisoActualizar : !tienePermisoCrear"
             ></textarea>
           </div>
           
@@ -45,7 +59,7 @@
             <button 
               type="submit" 
               class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
-              [disabled]="isSubmitting"
+              [disabled]="isSubmitting || (modoEdicion ? !tienePermisoActualizar : !tienePermisoCrear)"
             >
               <span *ngIf="!isSubmitting">{{ modoEdicion ? 'Actualizar' : 'Guardar' }}</span>
               <span *ngIf="isSubmitting">
@@ -69,7 +83,8 @@
       </div>
       
       <!-- Lista de permisos -->
-      <div class="md:col-span-2 bg-white rounded-lg shadow-md p-6">
+      <div [ngClass]="tienePermisoCrear || tienePermisoActualizar ? 'md:col-span-2' : 'md:col-span-3'" 
+           class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-semibold mb-4">Permisos del Sistema</h2>
         
         <!-- Estado de carga -->
@@ -81,14 +96,15 @@
         </div>
         
         <!-- Tabla de permisos -->
-        <div *ngIf="!isLoading" class="overflow-x-auto">
+        <div *ngIf="!isLoading && tienePermisoLeer" class="overflow-x-auto">
           <table *ngIf="permisos.length > 0" class="min-w-full border-collapse">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th *ngIf="tienePermisoLeer || tienePermisoActualizar || tienePermisoEliminar" 
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -96,22 +112,29 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ permiso.id }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ permiso.nombre }}</td>
                 <td class="px-6 py-4 text-sm text-gray-500">{{ permiso.descripcion || 'Sin descripción' }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td *ngIf="tienePermisoLeer || tienePermisoActualizar || tienePermisoEliminar" 
+                    class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
+                    *ngIf="tienePermisoLeer"
                     (click)="verUsuariosAsignados(permiso)" 
                     class="text-blue-600 hover:text-blue-900 mr-3"
+                    title="Ver usuarios con este permiso"
                   >
                     Ver Usuarios
                   </button>
                   <button 
+                    *ngIf="tienePermisoActualizar"
                     (click)="editarPermiso(permiso)" 
                     class="text-blue-600 hover:text-blue-900 mr-3"
+                    title="Editar permiso"
                   >
                     Editar
                   </button>
                   <button 
+                    *ngIf="tienePermisoEliminar"
                     (click)="confirmarEliminar(permiso)" 
                     class="text-red-600 hover:text-red-900"
+                    title="Eliminar permiso"
                   >
                     Eliminar
                   </button>
@@ -124,6 +147,12 @@
           <div *ngIf="permisos.length === 0" class="text-center py-8 text-gray-500">
             No hay permisos registrados. Añade uno nuevo para comenzar.
           </div>
+        </div>
+
+        <!-- ⚠️ Mensaje si no tiene permiso para ver -->
+        <div *ngIf="!tienePermisoLeer && (tienePermisoCrear || tienePermisoActualizar || tienePermisoEliminar)" 
+             class="text-center py-8 text-yellow-600">
+          No tienes permisos para ver la lista de permisos.
         </div>
       </div>
     </div>
@@ -149,7 +178,7 @@
           <button 
             (click)="eliminarPermiso()" 
             class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
-            [disabled]="isDeletingPermiso"
+            [disabled]="isDeletingPermiso || !tienePermisoEliminar"
           >
             <span *ngIf="!isDeletingPermiso">Eliminar</span>
             <span *ngIf="isDeletingPermiso">Eliminando...</span>
@@ -197,7 +226,8 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Función</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  <th *ngIf="tienePermisoRevocar" 
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
@@ -208,13 +238,14 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asignacion.usuario.User }}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asignacion.usuario.Funcion }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td *ngIf="tienePermisoRevocar" class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       (click)="revocarPermiso(asignacion.id)" 
                       class="text-red-600 hover:text-red-900"
                       [disabled]="isRevokingPermiso"
+                      title="Revocar permiso"
                     >
-                      <span *ngIf="!isRevokingPermiso">Revocar</span>
+                      <span *ngIf="!isRevokingPermiso || revocacionEnProceso !== asignacion.id">Revocar</span>
                       <span *ngIf="isRevokingPermiso && revocacionEnProceso === asignacion.id">
                         <svg class="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -249,3 +280,4 @@
       </div>
     </div>
   </div>
+</div>

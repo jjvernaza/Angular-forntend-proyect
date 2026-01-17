@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { PlanService } from '../services/plan.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-planes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './planes.component.html',
   styleUrls: ['./planes.component.css']
 })
@@ -26,10 +28,17 @@ export class PlanesComponent implements OnInit {
   errorMessage = '';
   showConfirmModal = false;
   hasError = false;
+
+  // ✅ Variables de permisos
+  tienePermisoLeer: boolean = false;
+  tienePermisoCrear: boolean = false;
+  tienePermisoActualizar: boolean = false;
+  tienePermisoEliminar: boolean = false;
   
   constructor(
     private fb: FormBuilder,
-    private planService: PlanService
+    private planService: PlanService,
+    private authService: AuthService
   ) {
     this.planForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -38,20 +47,45 @@ export class PlanesComponent implements OnInit {
   }
   
   ngOnInit(): void {
-    this.cargarPlanes();
+    // ✅ Verificar permisos
+    this.verificarPermisos();
+
+    // ✅ Solo cargar si tiene permiso de lectura
+    if (this.tienePermisoLeer) {
+      this.cargarPlanes();
+    }
+  }
+
+  private verificarPermisos(): void {
+    this.tienePermisoLeer = this.authService.hasPermission('planes.leer');
+    this.tienePermisoCrear = this.authService.hasPermission('planes.crear');
+    this.tienePermisoActualizar = this.authService.hasPermission('planes.actualizar');
+    this.tienePermisoEliminar = this.authService.hasPermission('planes.eliminar');
+    
+    console.log('🔐 Permisos en planes:');
+    console.log('   Leer:', this.tienePermisoLeer);
+    console.log('   Crear:', this.tienePermisoCrear);
+    console.log('   Actualizar:', this.tienePermisoActualizar);
+    console.log('   Eliminar:', this.tienePermisoEliminar);
   }
   
   get f() { return this.planForm.controls; }
   
   cargarPlanes(): void {
+    if (!this.tienePermisoLeer) {
+      console.log('❌ Sin permisos para leer planes');
+      return;
+    }
+
     this.isLoading = true;
     this.planService.getAllPlanes().subscribe({
       next: (data) => {
         this.planes = data;
         this.isLoading = false;
+        console.log('✅ Planes cargados:', this.planes.length);
       },
       error: (error) => {
-        console.error('Error al cargar planes:', error);
+        console.error('❌ Error al cargar planes:', error);
         this.errorMessage = 'Error al cargar los planes. Por favor, intente de nuevo.';
         this.isLoading = false;
       }
@@ -59,6 +93,16 @@ export class PlanesComponent implements OnInit {
   }
   
   guardarPlan(): void {
+    // ✅ Verificar permisos
+    if (this.modoEdicion && !this.tienePermisoActualizar) {
+      alert('No tienes permisos para actualizar planes.');
+      return;
+    }
+    if (!this.modoEdicion && !this.tienePermisoCrear) {
+      alert('No tienes permisos para crear planes.');
+      return;
+    }
+
     this.submitted = true;
     this.successMessage = '';
     this.errorMessage = '';
@@ -70,7 +114,7 @@ export class PlanesComponent implements OnInit {
     this.isSubmitting = true;
     
     if (this.modoEdicion) {
-      // Actualizar plan existente
+      console.log('📝 Actualizando plan:', this.planEditando.id);
       this.planService.updatePlan(this.planEditando.id, this.planForm.value).subscribe({
         next: () => {
           this.successMessage = 'Plan actualizado correctamente';
@@ -78,13 +122,13 @@ export class PlanesComponent implements OnInit {
           this.resetForm();
         },
         error: (error) => {
-          console.error('Error al actualizar plan:', error);
+          console.error('❌ Error al actualizar plan:', error);
           this.errorMessage = error?.error?.message || 'Error al actualizar el plan';
           this.isSubmitting = false;
         }
       });
     } else {
-      // Crear nuevo plan
+      console.log('➕ Creando plan:', this.planForm.value);
       this.planService.createPlan(this.planForm.value).subscribe({
         next: () => {
           this.successMessage = 'Plan creado correctamente';
@@ -92,7 +136,7 @@ export class PlanesComponent implements OnInit {
           this.resetForm();
         },
         error: (error) => {
-          console.error('Error al crear plan:', error);
+          console.error('❌ Error al crear plan:', error);
           this.errorMessage = error?.error?.message || 'Error al crear el plan';
           this.isSubmitting = false;
         }
@@ -101,6 +145,11 @@ export class PlanesComponent implements OnInit {
   }
   
   editarPlan(plan: any): void {
+    if (!this.tienePermisoActualizar) {
+      alert('No tienes permisos para editar planes.');
+      return;
+    }
+
     this.modoEdicion = true;
     this.planEditando = plan;
     this.planForm.patchValue({
@@ -116,6 +165,11 @@ export class PlanesComponent implements OnInit {
   }
   
   confirmarEliminar(plan: any): void {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar planes.');
+      return;
+    }
+
     this.planAEliminar = plan;
     this.showConfirmModal = true;
     this.hasError = false;
@@ -123,12 +177,19 @@ export class PlanesComponent implements OnInit {
   }
   
   eliminarPlan(): void {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar planes.');
+      return;
+    }
+
     if (!this.planAEliminar) return;
     
     this.isDeletingPlan = true;
     this.hasError = false;
     this.errorMessage = '';
     
+    console.log('🗑️ Eliminando plan:', this.planAEliminar.id);
+
     this.planService.deletePlan(this.planAEliminar.id).subscribe({
       next: () => {
         this.cargarPlanes();
@@ -138,12 +199,11 @@ export class PlanesComponent implements OnInit {
         this.successMessage = 'Plan eliminado correctamente';
       },
       error: (error) => {
-        console.error('Error al eliminar plan:', error);
+        console.error('❌ Error al eliminar plan:', error);
         this.hasError = true;
         this.errorMessage = error?.error?.message || 'Error al eliminar el plan';
         this.isDeletingPlan = false;
         
-        // Si el error es 409 (Conflict), significaría que el plan está siendo usado
         if (error.status === 409) {
           this.errorMessage = 'No se puede eliminar el plan porque está siendo utilizado por uno o más clientes.';
         }
