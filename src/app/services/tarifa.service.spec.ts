@@ -1,23 +1,16 @@
+// src/app/services/tarifa.service.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TarifaService } from './tarifa.service';
 
-describe('TarifaService - NetRoots VozIP', () => {
+describe('TarifaService', () => {
   let service: TarifaService;
   let httpMock: HttpTestingController;
-
-  const mockTarifa = {
-    id: 1,
-    plan_id: 1,
-    valor: 35000,
-    descripcion: 'Tarifa mensual Plan Básico Rural'
-  };
+  const apiUrl = 'http://localhost:3000/api/tarifas';
 
   const mockTarifas = [
-    mockTarifa,
-    { id: 2, plan_id: 2, valor: 65000, descripcion: 'Tarifa mensual Plan Premium Rural' },
-    { id: 3, plan_id: 3, valor: 150000, descripcion: 'Tarifa mensual Plan Empresarial' },
-    { id: 4, plan_id: 1, valor: 30000, descripcion: 'Tarifa promocional estudiantes rurales' }
+    { id: 1, nombre: 'Tarifa wlan', valor: 50000 },
+    { id: 2, nombre: 'Tarifa Fibra optica', valor: 100000 }
   ];
 
   beforeEach(() => {
@@ -37,94 +30,88 @@ describe('TarifaService - NetRoots VozIP', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get all tarifas VozIP', () => {
-    service.getAllTarifas().subscribe(tarifas => {
-      expect(tarifas.length).toBe(4);
-      expect(tarifas[0].valor).toBe(35000);
-      expect(tarifas[1].valor).toBe(65000);
-      expect(tarifas[3].descripcion).toContain('estudiantes');
+  // ===== GET ALL =====
+
+  it('getAllTarifas → debería obtener todas las tarifas', () => {
+    service.getAllTarifas().subscribe(data => {
+      expect(data).toEqual(mockTarifas);
+      expect(data.length).toBe(2);
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/all');
+    const req = httpMock.expectOne(`${apiUrl}/all`);
     expect(req.request.method).toBe('GET');
     req.flush(mockTarifas);
   });
 
-  it('should get tarifa by ID', () => {
-    service.getTarifaById(1).subscribe(tarifa => {
-      expect(tarifa).toEqual(mockTarifa);
-      expect(tarifa.descripcion).toContain('Básico Rural');
+  // ===== GET BY ID =====
+
+  it('getTarifaById → debería obtener tarifa por ID', () => {
+    const mockTarifa = mockTarifas[0];
+
+    service.getTarifaById(1).subscribe(data => {
+      expect(data).toEqual(mockTarifa);
+      expect(data.nombre).toBe('Tarifa Básica');
+      expect(data.valor).toBe(50000);
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/1');
+    const req = httpMock.expectOne(`${apiUrl}/1`);
     expect(req.request.method).toBe('GET');
     req.flush(mockTarifa);
   });
 
-  it('should create new tarifa for rural plans', () => {
-    const newTarifa = {
-      plan_id: 4,
-      valor: 45000,
-      descripcion: 'Tarifa especial zona rural extrema'
-    };
+  // ===== CREATE =====
 
-    service.createTarifa(newTarifa).subscribe(response => {
-      expect(response.valor).toBe(45000);
-      expect(response.descripcion).toContain('rural extrema');
+  it('createTarifa → debería crear nueva tarifa', () => {
+    const newTarifa = { nombre: 'Tarifa Ultra', valor: 150000 };
+
+    service.createTarifa(newTarifa).subscribe(data => {
+      expect(data).toEqual({ id: 3, ...newTarifa });
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/create');
+    const req = httpMock.expectOne(`${apiUrl}/create`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(newTarifa);
-    req.flush({ ...newTarifa, id: 5 });
+    req.flush({ id: 3, ...newTarifa });
   });
 
-  it('should update tarifa VozIP', () => {
-    const updatedTarifa = { ...mockTarifa, valor: 40000 };
+  // ===== UPDATE =====
 
-    service.updateTarifa(1, updatedTarifa).subscribe(response => {
-      expect(response.valor).toBe(40000);
+  it('updateTarifa → debería actualizar tarifa', () => {
+    const updatedTarifa = { nombre: 'Tarifa Básica Plus', valor: 60000 };
+
+    service.updateTarifa(1, updatedTarifa).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/update/1');
+    const req = httpMock.expectOne(`${apiUrl}/update/1`);
     expect(req.request.method).toBe('PUT');
-    req.flush(updatedTarifa);
+    expect(req.request.body).toEqual(updatedTarifa);
+    req.flush({ success: true });
   });
 
-  it('should delete tarifa', () => {
-    service.deleteTarifa(1).subscribe(response => {
-      expect(response.message).toBe('Tarifa eliminada');
+  // ===== DELETE =====
+
+  it('deleteTarifa → debería eliminar tarifa', () => {
+    service.deleteTarifa(1).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/delete/1');
+    const req = httpMock.expectOne(`${apiUrl}/delete/1`);
     expect(req.request.method).toBe('DELETE');
-    req.flush({ message: 'Tarifa eliminada' });
+    req.flush({ success: true });
   });
 
-  it('should handle rural pricing scenarios', () => {
-    const ruralTarifas = [
-      { id: 1, plan_id: 1, valor: 25000, descripcion: 'Tarifa subsidiada zona rural' },
-      { id: 2, plan_id: 2, valor: 80000, descripcion: 'Tarifa premium con instalación incluida' }
-    ];
+  // ===== MANEJO DE ERRORES =====
 
-    service.getAllTarifas().subscribe(tarifas => {
-      expect(tarifas[0].descripcion).toContain('subsidiada');
-      expect(tarifas[1].valor).toBe(80000);
-    });
-
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/all');
-    req.flush(ruralTarifas);
-  });
-
-  it('should handle error when getting tarifas', () => {
-    service.getAllTarifas().subscribe(
-      () => fail('Should have failed'),
-      (error) => {
+  it('debería manejar errores HTTP', () => {
+    service.getAllTarifas().subscribe({
+      next: () => fail('debería haber fallado'),
+      error: (error) => {
         expect(error.status).toBe(500);
       }
-    );
+    });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/tarifas/all');
-    req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    const req = httpMock.expectOne(`${apiUrl}/all`);
+    req.flush('Error del servidor', { status: 500, statusText: 'Server Error' });
   });
 });

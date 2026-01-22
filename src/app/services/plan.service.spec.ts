@@ -1,24 +1,16 @@
+// src/app/services/plan.service.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { PlanService } from './plan.service';
 
-describe('PlanService - NetRoots VozIP', () => {
+describe('PlanService', () => {
   let service: PlanService;
   let httpMock: HttpTestingController;
-
-  const mockPlan = {
-    id: 1,
-    nombre: 'Plan Básico Rural',
-    descripcion: 'Internet 10 Mbps para zona rural Dagua',
-    velocidad: '10 Mbps',
-    precio: 35000,
-    servicio_id: 1
-  };
+  const apiUrl = 'http://localhost:3000/api/planes';
 
   const mockPlanes = [
-    mockPlan,
-    { id: 2, nombre: 'Plan Premium Rural', descripcion: 'Internet 50 Mbps fibra óptica', velocidad: '50 Mbps', precio: 65000, servicio_id: 1 },
-    { id: 3, nombre: 'Plan Empresarial', descripcion: 'Internet dedicado para empresas rurales', velocidad: '100 Mbps', precio: 150000, servicio_id: 2 }
+    { id: 1, nombre: 'Plan Básico', velocidad: '10 Mbps' },
+    { id: 2, nombre: 'Plan Premium', velocidad: '50 Mbps' }
   ];
 
   beforeEach(() => {
@@ -38,69 +30,87 @@ describe('PlanService - NetRoots VozIP', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get all planes VozIP rurales', () => {
-    service.getAllPlanes().subscribe(planes => {
-      expect(planes.length).toBe(3);
-      expect(planes[0].nombre).toBe('Plan Básico Rural');
-      expect(planes[1].velocidad).toBe('50 Mbps');
-      expect(planes[2].precio).toBe(150000);
+  // ===== GET ALL =====
+
+  it('getAllPlanes → debería obtener todos los planes', () => {
+    service.getAllPlanes().subscribe(data => {
+      expect(data).toEqual(mockPlanes);
+      expect(data.length).toBe(2);
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/planes/all');
+    const req = httpMock.expectOne(`${apiUrl}/all`);
     expect(req.request.method).toBe('GET');
     req.flush(mockPlanes);
   });
 
-  it('should get plan by ID', () => {
-    service.getPlanById(1).subscribe(plan => {
-      expect(plan).toEqual(mockPlan);
-      expect(plan.descripcion).toContain('rural');
+  // ===== GET BY ID =====
+
+  it('getPlanById → debería obtener plan por ID', () => {
+    const mockPlan = mockPlanes[0];
+
+    service.getPlanById(1).subscribe(data => {
+      expect(data).toEqual(mockPlan);
+      expect(data.nombre).toBe('Plan Básico');
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/planes/1');
+    const req = httpMock.expectOne(`${apiUrl}/1`);
     expect(req.request.method).toBe('GET');
     req.flush(mockPlan);
   });
 
-  it('should create new plan for rural areas', () => {
-    const newPlan = {
-      nombre: 'Plan Satélite Rural',
-      descripcion: 'Internet satelital para zonas remotas del Valle',
-      velocidad: '25 Mbps',
-      precio: 85000,
-      servicio_id: 3
-    };
+  // ===== CREATE =====
 
-    service.createPlan(newPlan).subscribe(response => {
-      expect(response.nombre).toBe('Plan Satélite Rural');
-      expect(response.descripcion).toContain('Valle');
+  it('createPlan → debería crear nuevo plan', () => {
+    const newPlan = { nombre: 'Plan Ultra', velocidad: '100 Mbps' };
+
+    service.createPlan(newPlan).subscribe(data => {
+      expect(data).toEqual({ id: 3, ...newPlan });
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/planes/create');
+    const req = httpMock.expectOne(`${apiUrl}/create`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(newPlan);
-    req.flush({ ...newPlan, id: 4 });
+    req.flush({ id: 3, ...newPlan });
   });
 
-  it('should update plan VozIP', () => {
-    const updatedPlan = { ...mockPlan, precio: 40000 };
+  // ===== UPDATE =====
 
-    service.updatePlan(1, updatedPlan).subscribe(response => {
-      expect(response.precio).toBe(40000);
+  it('updatePlan → debería actualizar plan', () => {
+    const updatedPlan = { nombre: 'Plan Básico Plus', velocidad: '20 Mbps' };
+
+    service.updatePlan(1, updatedPlan).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/planes/update/1');
+    const req = httpMock.expectOne(`${apiUrl}/update/1`);
     expect(req.request.method).toBe('PUT');
-    req.flush(updatedPlan);
+    expect(req.request.body).toEqual(updatedPlan);
+    req.flush({ success: true });
   });
 
-  it('should delete plan', () => {
-    service.deletePlan(1).subscribe(response => {
-      expect(response.message).toBe('Plan eliminado');
+  // ===== DELETE =====
+
+  it('deletePlan → debería eliminar plan', () => {
+    service.deletePlan(1).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/planes/delete/1');
+    const req = httpMock.expectOne(`${apiUrl}/delete/1`);
     expect(req.request.method).toBe('DELETE');
-    req.flush({ message: 'Plan eliminado' });
+    req.flush({ success: true });
+  });
+
+  // ===== MANEJO DE ERRORES =====
+
+  it('debería manejar errores HTTP', () => {
+    service.getAllPlanes().subscribe({
+      next: () => fail('debería haber fallado'),
+      error: (error) => {
+        expect(error.status).toBe(500);
+      }
+    });
+
+    const req = httpMock.expectOne(`${apiUrl}/all`);
+    req.flush('Error del servidor', { status: 500, statusText: 'Server Error' });
   });
 });

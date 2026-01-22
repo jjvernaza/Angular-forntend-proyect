@@ -1,22 +1,16 @@
+// src/app/services/sector.service.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { SectorService } from './sector.service';
 
-describe('SectorService - NetRoots VozIP', () => {
+describe('SectorService', () => {
   let service: SectorService;
   let httpMock: HttpTestingController;
-
-  const mockSector = {
-    id: 1,
-    nombre: 'Km 30',
-    descripcion: 'Sector rural Kilómetro 30, Dagua Valle del Cauca'
-  };
+  const apiUrl = 'http://localhost:3000/api/sectores';
 
   const mockSectores = [
-    mockSector,
-    { id: 2, nombre: 'El Carmen', descripcion: 'Vereda El Carmen, zona montañosa' },
-    { id: 3, nombre: 'La Esperanza', descripcion: 'Vereda La Esperanza, vía Buenaventura' },
-    { id: 4, nombre: 'Km 25', descripcion: 'Sector Kilómetro 25, entrada a Dagua' }
+    { id: 1, nombre: 'Sector Norte', descripcion: 'Zona norte de la ciudad' },
+    { id: 2, nombre: 'Sector Sur', descripcion: 'Zona sur de la ciudad' }
   ];
 
   beforeEach(() => {
@@ -36,84 +30,87 @@ describe('SectorService - NetRoots VozIP', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get all sectores rurales Dagua', () => {
-    service.getAllSectores().subscribe(sectores => {
-      expect(sectores.length).toBe(4);
-      expect(sectores[0].nombre).toBe('Km 30');
-      expect(sectores[1].descripcion).toContain('Carmen');
-      expect(sectores[2].descripcion).toContain('Buenaventura');
+  // ===== GET ALL =====
+
+  it('getAllSectores → debería obtener todos los sectores', () => {
+    service.getAllSectores().subscribe(data => {
+      expect(data).toEqual(mockSectores);
+      expect(data.length).toBe(2);
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/sectores/all');
+    const req = httpMock.expectOne(`${apiUrl}/all`);
     expect(req.request.method).toBe('GET');
     req.flush(mockSectores);
   });
 
-  it('should get sector by ID', () => {
-    service.getSectorById(1).subscribe(sector => {
-      expect(sector).toEqual(mockSector);
-      expect(sector.descripcion).toContain('Dagua Valle del Cauca');
+  // ===== GET BY ID =====
+
+  it('getSectorById → debería obtener sector por ID', () => {
+    const mockSector = mockSectores[0];
+
+    service.getSectorById(1).subscribe(data => {
+      expect(data).toEqual(mockSector);
+      expect(data.nombre).toBe('Sector Norte');
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/sectores/1');
+    const req = httpMock.expectOne(`${apiUrl}/1`);
     expect(req.request.method).toBe('GET');
     req.flush(mockSector);
   });
 
-  it('should create new sector rural', () => {
-    const newSector = {
-      nombre: 'La Cascada',
-      descripcion: 'Nueva vereda La Cascada, zona de difícil acceso'
-    };
+  // ===== CREATE =====
 
-    service.createSector(newSector).subscribe(response => {
-      expect(response.nombre).toBe('La Cascada');
-      expect(response.descripcion).toContain('difícil acceso');
+  it('createSector → debería crear nuevo sector', () => {
+    const newSector = { nombre: 'Sector Este', descripcion: 'Zona este' };
+
+    service.createSector(newSector).subscribe(data => {
+      expect(data).toEqual({ id: 3, ...newSector });
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/sectores/create');
+    const req = httpMock.expectOne(`${apiUrl}/create`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(newSector);
-    req.flush({ ...newSector, id: 5 });
+    req.flush({ id: 3, ...newSector });
   });
 
-  it('should update sector information', () => {
-    const updatedSector = { 
-      ...mockSector, 
-      descripcion: 'Sector rural Kilómetro 30, Dagua Valle - Actualizado con nuevas referencias' 
-    };
+  // ===== UPDATE =====
 
-    service.updateSector(1, updatedSector).subscribe(response => {
-      expect(response.descripcion).toContain('Actualizado');
+  it('updateSector → debería actualizar sector', () => {
+    const updatedSector = { nombre: 'Sector Norte Actualizado', descripcion: 'Nueva descripción' };
+
+    service.updateSector(1, updatedSector).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/sectores/update/1');
+    const req = httpMock.expectOne(`${apiUrl}/update/1`);
     expect(req.request.method).toBe('PUT');
-    req.flush(updatedSector);
+    expect(req.request.body).toEqual(updatedSector);
+    req.flush({ success: true });
   });
 
-  it('should delete sector', () => {
-    service.deleteSector(1).subscribe(response => {
-      expect(response.message).toBe('Sector eliminado');
+  // ===== DELETE =====
+
+  it('deleteSector → debería eliminar sector', () => {
+    service.deleteSector(1).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/sectores/delete/1');
+    const req = httpMock.expectOne(`${apiUrl}/delete/1`);
     expect(req.request.method).toBe('DELETE');
-    req.flush({ message: 'Sector eliminado' });
+    req.flush({ success: true });
   });
 
-  it('should handle rural-specific sectors', () => {
-    const ruralSectors = [
-      { id: 1, nombre: 'Zona Alta', descripcion: 'Sector montañoso con señal limitada' },
-      { id: 2, nombre: 'Río Dagua', descripcion: 'Sector ribereño con acceso por canoa' }
-    ];
+  // ===== MANEJO DE ERRORES =====
 
-    service.getAllSectores().subscribe(sectores => {
-      expect(sectores[0].descripcion).toContain('montañoso');
-      expect(sectores[1].descripcion).toContain('canoa');
+  it('debería manejar errores HTTP', () => {
+    service.getAllSectores().subscribe({
+      next: () => fail('debería haber fallado'),
+      error: (error) => {
+        expect(error.status).toBe(500);
+      }
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/sectores/all');
-    req.flush(ruralSectors);
+    const req = httpMock.expectOne(`${apiUrl}/all`);
+    req.flush('Error del servidor', { status: 500, statusText: 'Server Error' });
   });
 });

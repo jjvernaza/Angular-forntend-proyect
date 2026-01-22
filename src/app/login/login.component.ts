@@ -37,7 +37,11 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
+    // ✅ CORRECCIÓN: Marcar todos los controles como touched antes de validar
     if (this.loginForm.invalid) {
+      Object.keys(this.loginForm.controls).forEach(key => {
+        this.loginForm.get(key)?.markAsTouched();
+      });
       return;
     }
     

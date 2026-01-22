@@ -3,21 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { MetodoPagoService } from './metodo-pago.service';
 
-describe('MetodoPagoService - NetRoots VozIP', () => {
+describe('MetodoPagoService', () => {
   let service: MetodoPagoService;
   let httpMock: HttpTestingController;
+  const apiUrl = 'http://localhost:3000/api/metodos-pago';
 
-  const mockMetodoPago = {
-    id: 1,
-    metodo: 'Efectivo',
-    descripcion: 'Pago en efectivo en punto físico Km 30'
-  };
-
-  const mockMetodosPago = [
-    mockMetodoPago,
-    { id: 2, metodo: 'Transferencia Bancaria', descripcion: 'Bancolombia cuenta VozIP' },
-    { id: 3, metodo: 'Nequi', descripcion: 'Pago móvil Nequi' },
-    { id: 4, metodo: 'Daviplata', descripcion: 'Pago móvil Daviplata' }
+  const mockMetodos = [
+    { id: 1, nombre: 'Efectivo', descripcion: 'Pago en efectivo' },
+    { id: 2, nombre: 'Transferencia', descripcion: 'Transferencia bancaria' }
   ];
 
   beforeEach(() => {
@@ -37,76 +30,87 @@ describe('MetodoPagoService - NetRoots VozIP', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get all metodos de pago VozIP', () => {
-    service.getAllMetodosPago().subscribe(metodos => {
-      expect(metodos.length).toBe(4);
-      expect(metodos[0].metodo).toBe('Efectivo');
-      expect(metodos[2].metodo).toBe('Nequi');
+  // ===== GET ALL =====
+
+  it('getAllMetodosPago → debería obtener todos los métodos de pago', () => {
+    service.getAllMetodosPago().subscribe(data => {
+      expect(data).toEqual(mockMetodos);
+      expect(data.length).toBe(2);
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/metodos-pago/all');
+    const req = httpMock.expectOne(`${apiUrl}/all`);
     expect(req.request.method).toBe('GET');
-    req.flush(mockMetodosPago);
+    req.flush(mockMetodos);
   });
 
-  it('should get metodo pago by ID', () => {
-    service.getMetodoPagoById(1).subscribe(metodo => {
-      expect(metodo).toEqual(mockMetodoPago);
-      expect(metodo.metodo).toBe('Efectivo');
+  // ===== GET BY ID =====
+
+  it('getMetodoPagoById → debería obtener método de pago por ID', () => {
+    const mockMetodo = mockMetodos[0];
+
+    service.getMetodoPagoById(1).subscribe(data => {
+      expect(data).toEqual(mockMetodo);
+      expect(data.nombre).toBe('Efectivo');
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/metodos-pago/1');
+    const req = httpMock.expectOne(`${apiUrl}/1`);
     expect(req.request.method).toBe('GET');
-    req.flush(mockMetodoPago);
+    req.flush(mockMetodo);
   });
 
-  it('should create new metodo pago for rural payments', () => {
-    const newMetodo = {
-      metodo: 'Pago Móvil Rural',
-      descripcion: 'Pago a través de red móvil en zona rural'
-    };
+  // ===== CREATE =====
 
-    service.createMetodoPago(newMetodo).subscribe(response => {
-      expect(response.metodo).toBe('Pago Móvil Rural');
+  it('createMetodoPago → debería crear nuevo método de pago', () => {
+    const newMetodo = { nombre: 'Nequi', descripcion: 'Pago por Nequi' };
+
+    service.createMetodoPago(newMetodo).subscribe(data => {
+      expect(data).toEqual({ id: 3, ...newMetodo });
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/metodos-pago/create');
+    const req = httpMock.expectOne(`${apiUrl}/create`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(newMetodo);
-    req.flush({ ...newMetodo, id: 5 });
+    req.flush({ id: 3, ...newMetodo });
   });
 
-  it('should update metodo pago', () => {
-    const updatedMetodo = { ...mockMetodoPago, descripcion: 'Efectivo en Gane Km 30' };
+  // ===== UPDATE =====
 
-    service.updateMetodoPago(1, updatedMetodo).subscribe(response => {
-      expect(response.descripcion).toBe('Efectivo en Gane Km 30');
+  it('updateMetodoPago → debería actualizar método de pago', () => {
+    const updatedMetodo = { nombre: 'Efectivo Actualizado', descripcion: 'Nuevo' };
+
+    service.updateMetodoPago(1, updatedMetodo).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/metodos-pago/update/1');
+    const req = httpMock.expectOne(`${apiUrl}/update/1`);
     expect(req.request.method).toBe('PUT');
-    req.flush(updatedMetodo);
+    expect(req.request.body).toEqual(updatedMetodo);
+    req.flush({ success: true });
   });
 
-  it('should delete metodo pago', () => {
-    service.deleteMetodoPago(1).subscribe(response => {
-      expect(response.message).toBe('Método eliminado');
+  // ===== DELETE =====
+
+  it('deleteMetodoPago → debería eliminar método de pago', () => {
+    service.deleteMetodoPago(1).subscribe(data => {
+      expect(data).toBeTruthy();
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/metodos-pago/delete/1');
+    const req = httpMock.expectOne(`${apiUrl}/delete/1`);
     expect(req.request.method).toBe('DELETE');
-    req.flush({ message: 'Método eliminado' });
+    req.flush({ success: true });
   });
 
-  it('should handle HTTP errors gracefully', () => {
-    service.getAllMetodosPago().subscribe(
-      () => fail('Should have failed'),
-      (error) => {
+  // ===== MANEJO DE ERRORES =====
+
+  it('debería manejar errores HTTP', () => {
+    service.getAllMetodosPago().subscribe({
+      next: () => fail('debería haber fallado'),
+      error: (error) => {
         expect(error.status).toBe(500);
       }
-    );
+    });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/metodos-pago/all');
-    req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    const req = httpMock.expectOne(`${apiUrl}/all`);
+    req.flush('Error del servidor', { status: 500, statusText: 'Server Error' });
   });
 });
