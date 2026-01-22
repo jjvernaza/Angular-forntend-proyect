@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class SectorService {
-  private apiUrl = 'http://localhost:3000/api/sectores';
+  private apiUrl = 'https://api.ictlatam.com/api/sectores';
 
   constructor(private http: HttpClient) { }
 

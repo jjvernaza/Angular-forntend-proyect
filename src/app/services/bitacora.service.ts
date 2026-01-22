@@ -7,7 +7,7 @@ import { catchError } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class BitacoraService {
-  private baseUrl = 'http://localhost:3000/api/bitacora';
+  private baseUrl = 'https://api.ictlatam.com/api/bitacora';
   
   constructor(private http: HttpClient) {}
   

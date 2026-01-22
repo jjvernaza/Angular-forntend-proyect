@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class PlanService {
-  private apiUrl = 'http://localhost:3000/api/planes';
+  private apiUrl = 'https://api.ictlatam.com/api/planes';
 
   constructor(private http: HttpClient) { }
 
