@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { SidebarComponent } from './sidebar/sidebar.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
+import { Component, OnInit } from '@angular/core';
+import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { AuthService } from './services/auth.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -12,17 +12,28 @@ import { CommonModule } from '@angular/common';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'dashboard-proyecto';
+  isAuthenticated: boolean = false;
 
-  isAuthenticated = false;
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
-  constructor(private router: Router) {
-    // Revisar el estado de autenticación en cada cambio de ruta
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        this.isAuthenticated = event.url !== '/';
-      }
+  ngOnInit(): void {
+    this.checkAuthentication();
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.checkAuthentication();
     });
+  }
+
+  private checkAuthentication(): void {
+    this.isAuthenticated = this.authService.isAuthenticated();
+    console.log('🔐 Estado de autenticación:', this.isAuthenticated);
+    console.log('📍 Ruta actual:', this.router.url);
   }
 }

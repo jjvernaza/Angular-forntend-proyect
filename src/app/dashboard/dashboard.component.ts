@@ -36,7 +36,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public monthlyIncomeData: MonthlyIncomeItem[] = [];
   public expectedIncomeData: ExpectedIncomeItem[] = [];
   
-  public availableYears: number[] = [2024, 2025];
+  // ✅ CORREGIDO: Generar años dinámicamente desde 2024 hasta año actual + 1
+  public availableYears: number[] = [];
   public selectedYear: number = new Date().getFullYear();
   
   private subscriptions: Subscription = new Subscription();
@@ -56,6 +57,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     'DICIEMBRE': 'Diciembre'
   };
 
+  // Orden de meses para ordenamiento correcto
+  private monthOrder: { [key: string]: number } = {
+    'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4, 'Mayo': 5, 'Junio': 6,
+    'Julio': 7, 'Agosto': 8, 'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12
+  };
+
   // ✅ Variable de permisos
   tienePermiso: boolean = false;
 
@@ -66,6 +73,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // ✅ Generar años disponibles dinámicamente
+    this.generateAvailableYears();
+    
     // ✅ Verificar permisos
     this.verificarPermisos();
 
@@ -86,12 +96,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.sectorChart) this.sectorChart.destroy();
   }
 
+  // ✅ NUEVO: Generar años disponibles dinámicamente
+  private generateAvailableYears(): void {
+    const currentYear = new Date().getFullYear();
+    this.availableYears = [];
+    
+    // Desde 2024 hasta año actual + 1
+    for (let year = 2024; year <= currentYear + 1; year++) {
+      this.availableYears.push(year);
+    }
+    
+    console.log('📅 Años disponibles:', this.availableYears);
+  }
+
   private verificarPermisos(): void {
     this.tienePermiso = this.authService.hasPermission('dashboard.ver');
     
     console.log('🔐 Permisos en dashboard:');
     console.log('   Ver dashboard:', this.tienePermiso);
-    console.log('   Permisos del usuario:', this.authService.getUserPermissions());
   }
 
   loadDashboardData(): void {
@@ -100,33 +122,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    console.log(`📊 Cargando datos del dashboard para el año ${this.selectedYear}...`);
+
+    // Cargar estadísticas generales
     const statsSub = this.apiService.getDashboardStats().subscribe({
       next: (data: any) => {
         this.dashboardStats = data;
         console.log('✅ Dashboard stats cargados:', data);
         
-        if (data.pagos?.ultimosDosMeses) {
-          this.monthlyIncomeData = data.pagos.ultimosDosMeses.map((item: any) => ({
-            mes: this.formatMonth(item.mes),
-            anio: item.anio,
-            total: parseFloat(item.total || 0)
-          }));
-        }
-        
-        if (data.pagos?.esperados) {
-          this.expectedIncomeData = data.pagos.esperados.map((item: any) => ({
-            mes: this.formatMonth(item.mes),
-            anio: item.anio,
-            totalEsperado: parseFloat(item.totalEsperado || 0),
-            cantidadClientes: item.cantidadClientes || 0
-          }));
-        }
+        // Cargar ingresos mensuales del año seleccionado
+        this.loadMonthlyIncome();
         
         setTimeout(() => {
           this.initializeClientChart();
           this.initializeServiceChart();
           this.initializeSectorChart();
-          this.initializeIncomeChart();
         }, 300);
       },
       error: (error: any) => {
@@ -137,10 +147,94 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.subscriptions.add(statsSub);
   }
 
+  // ✅ MEJORADO: Cargar ingresos mensuales por año
+  loadMonthlyIncome(): void {
+    console.log(`📈 Cargando ingresos mensuales para ${this.selectedYear}...`);
+    
+    const incomeSub = this.apiService.getMonthlyIncome(this.selectedYear).subscribe({
+      next: (data: any[]) => {
+        console.log('✅ Ingresos mensuales reales recibidos:', data);
+        
+        // Procesar datos de ingresos reales
+        this.monthlyIncomeData = data.map((item: any) => ({
+          mes: this.formatMonth(item.Mes || item.mes),
+          anio: item.Ano || item.anio || this.selectedYear,
+          total: parseFloat(item.total || 0)
+        }));
+
+        // ✅ Ordenar por mes
+        this.monthlyIncomeData.sort((a, b) => 
+          this.monthOrder[a.mes] - this.monthOrder[b.mes]
+        );
+
+        console.log('📊 Ingresos reales procesados:', this.monthlyIncomeData);
+
+        // ✅ NUEVO: Cargar ingresos esperados desde el backend
+        this.loadExpectedIncome();
+      },
+      error: (error: any) => {
+        console.error('❌ Error al cargar ingresos mensuales:', error);
+        this.monthlyIncomeData = [];
+        this.expectedIncomeData = [];
+      }
+    });
+
+    this.subscriptions.add(incomeSub);
+  }
+
+  // ✅ NUEVO: Cargar ingresos esperados desde el backend
+  loadExpectedIncome(): void {
+    console.log(`💰 Cargando ingresos esperados para ${this.selectedYear}...`);
+    
+    const expectedSub = this.apiService.getIngresosEsperados(this.selectedYear).subscribe({
+      next: (data: any[]) => {
+        console.log('✅ Ingresos esperados recibidos:', data);
+        
+        // Procesar datos de ingresos esperados
+        this.expectedIncomeData = data.map((item: any) => ({
+          mes: this.formatMonth(item.mes),
+          anio: item.anio || this.selectedYear,
+          totalEsperado: parseFloat(item.totalEsperado || 0),
+          cantidadClientes: item.cantidadClientes || 0
+        }));
+
+        // ✅ Ordenar por mes
+        this.expectedIncomeData.sort((a, b) => 
+          this.monthOrder[a.mes] - this.monthOrder[b.mes]
+        );
+
+        console.log('📊 Ingresos esperados procesados:', this.expectedIncomeData);
+        console.log(`💵 Total anual esperado: ${this.formatCurrency(
+          this.expectedIncomeData.reduce((sum, item) => sum + item.totalEsperado, 0)
+        )}`);
+
+        // Actualizar gráfico de ingresos
+        setTimeout(() => {
+          this.initializeIncomeChart();
+        }, 100);
+      },
+      error: (error: any) => {
+        console.error('❌ Error al cargar ingresos esperados:', error);
+        this.expectedIncomeData = [];
+        
+        // Actualizar gráfico de todos modos (solo con ingresos reales)
+        setTimeout(() => {
+          this.initializeIncomeChart();
+        }, 100);
+      }
+    });
+
+    this.subscriptions.add(expectedSub);
+  }
+
   initializeClientChart(): void {
     const clientChartCanvas = document.getElementById('clientChartCanvas') as HTMLCanvasElement;
     if (!clientChartCanvas) return;
     
+    if (this.clientChart) {
+      this.clientChart.destroy();
+    }
+
     const clientData = this.dashboardStats?.clientes || { total: 0, activos: 0, suspendidos: 0, retirados: 0 };
     
     this.clientChart = new Chart(clientChartCanvas, {
@@ -155,7 +249,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
               clientData.suspendidos || 0, 
               clientData.retirados || 0
             ],
-            backgroundColor: ['#22c55e', '#ff8800', '#c42121']
+            backgroundColor: ['#22c55e', '#f97316', '#ef4444']
           }
         ]
       },
@@ -164,11 +258,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           title: {
-            display: true,
-            text: 'Distribución de Clientes por Estado'
+            display: false
           },
           legend: {
-            position: 'bottom'
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
           }
         }
       }
@@ -179,59 +289,107 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const incomeChartCanvas = document.getElementById('incomeChartCanvas') as HTMLCanvasElement;
     if (!incomeChartCanvas) return;
     
-    let meses: string[] = [];
-    let ingresosReales: number[] = [];
-    let ingresosEsperados: number[] = [];
-    
-    if (this.monthlyIncomeData && this.monthlyIncomeData.length > 0) {
-      meses = this.monthlyIncomeData.map((item: MonthlyIncomeItem) => item.mes);
-      ingresosReales = this.monthlyIncomeData.map((item: MonthlyIncomeItem) => item.total);
-      ingresosEsperados = this.expectedIncomeData.map((item: ExpectedIncomeItem) => item.totalEsperado);
-    } else {
-      const monthNames = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-      ];
-      meses = monthNames;
-      ingresosReales = Array(12).fill(0);
-      ingresosEsperados = Array(12).fill(0);
+    if (this.incomeChart) {
+      this.incomeChart.destroy();
     }
+
+    const mesesOrden = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    // ✅ CORREGIDO: Asegurar que todos los meses estén representados
+    const ingresosReales = mesesOrden.map(mes => {
+      const dato = this.monthlyIncomeData.find(item => item.mes === mes);
+      return dato ? dato.total : 0;
+    });
+
+    const ingresosEsperados = mesesOrden.map(mes => {
+      const dato = this.expectedIncomeData.find(item => item.mes === mes);
+      return dato ? dato.totalEsperado : 0;
+    });
+
+    console.log('📊 Datos para gráfico de ingresos:');
+    console.log('   Meses:', mesesOrden);
+    console.log('   Reales:', ingresosReales);
+    console.log('   Esperados:', ingresosEsperados);
 
     this.incomeChart = new Chart(incomeChartCanvas, {
       type: 'bar' as ChartType,
       data: {
-        labels: meses,
+        labels: mesesOrden,
         datasets: [
           {
             label: 'Ingresos Reales',
             data: ingresosReales,
-            backgroundColor: '#2196F3'
+            backgroundColor: '#3b82f6',
+            borderColor: '#2563eb',
+            borderWidth: 1
           },
           {
             label: 'Ingresos Esperados',
             data: ingresosEsperados,
-            backgroundColor: '#4CAF50'
+            backgroundColor: '#10b981',
+            borderColor: '#059669',
+            borderWidth: 1
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
         plugins: {
           title: {
-            display: true,
-            text: `Ingresos Mensuales ${this.selectedYear}`
+            display: false
           },
           legend: {
-            position: 'top'
+            position: 'top',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12,
+                weight: 'bold'
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context: any) {
+                const label = context.dataset.label || '';
+                const value = context.parsed.y || 0;
+                return `${label}: ${new Intl.NumberFormat('es-CO', {
+                  style: 'currency',
+                  currency: 'COP',
+                  minimumFractionDigits: 0
+                }).format(value)}`;
+              }
+            }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Monto ($)'
+            ticks: {
+              callback: function(value: any) {
+                return new Intl.NumberFormat('es-CO', {
+                  style: 'currency',
+                  currency: 'COP',
+                  minimumFractionDigits: 0,
+                  notation: 'compact'
+                }).format(value);
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
             }
           }
         }
@@ -243,6 +401,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const serviceChartCanvas = document.getElementById('serviceChartCanvas') as HTMLCanvasElement;
     if (!serviceChartCanvas) return;
     
+    if (this.serviceChart) {
+      this.serviceChart.destroy();
+    }
+
     let tiposServicio = ['Sin datos'];
     let cantidadPorServicio = [1];
     
@@ -260,8 +422,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
             label: 'Clientes por Tipo de Servicio',
             data: cantidadPorServicio,
             backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-            ]
+              '#ef4444', '#3b82f6', '#f59e0b', '#14b8a6', '#8b5cf6', '#f97316'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
           }
         ]
       },
@@ -270,11 +434,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           title: {
-            display: true,
-            text: 'Distribución por Tipo de Servicio'
+            display: false
           },
           legend: {
-            position: 'bottom'
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
           }
         }
       }
@@ -285,6 +465,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const sectorChartCanvas = document.getElementById('sectorChartCanvas') as HTMLCanvasElement;
     if (!sectorChartCanvas) return;
     
+    if (this.sectorChart) {
+      this.sectorChart.destroy();
+    }
+
     let nombresSectores = ['Sin datos'];
     let cantidadPorSector = [0];
     
@@ -301,7 +485,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Clientes por Sector',
             data: cantidadPorSector,
-            backgroundColor: '#4CAF50'
+            backgroundColor: '#10b981',
+            borderColor: '#059669',
+            borderWidth: 1
           }
         ]
       },
@@ -310,19 +496,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           title: {
-            display: true,
-            text: 'Distribución por Sector'
+            display: false
           },
           legend: {
             display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context: any) {
+                const value = context.parsed.y || 0;
+                return `Clientes: ${value}`;
+              }
+            }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Cantidad de Clientes'
+            ticks: {
+              stepSize: 1,
+              callback: function(value: any) {
+                return Number.isInteger(value) ? value : '';
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
             }
           }
         }
@@ -343,13 +546,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     
     try {
       let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Mes,Año,Ingresos Reales,Ingresos Esperados\n";
+      csvContent += "Mes,Año,Ingresos Reales,Ingresos Esperados,Diferencia,Cumplimiento %\n";
       
       for (let i = 0; i < this.monthlyIncomeData.length; i++) {
         const item = this.monthlyIncomeData[i];
-        const esperadoItem = this.expectedIncomeData[i];
-        const esperado = esperadoItem ? esperadoItem.totalEsperado : 0;
-        csvContent += `${item.mes},${item.anio},${item.total},${esperado}\n`;
+        const esperado = this.getExpectedIncomeForIndex(i);
+        const diferencia = item.total - esperado;
+        const cumplimiento = esperado > 0 ? ((item.total / esperado) * 100).toFixed(2) : '0';
+        
+        csvContent += `${item.mes},${item.anio},${item.total},${esperado},${diferencia},${cumplimiento}\n`;
       }
       
       const encodedUri = encodeURI(csvContent);
@@ -444,14 +649,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     if (this.selectedYear !== year) {
+      console.log(`📅 Cambiando año de ${this.selectedYear} a ${year}`);
       this.selectedYear = year;
-      this.loadDashboardData();
+      this.loadMonthlyIncome();
     }
   }
   
   formatMonth(mesUpperCase: string): string {
     if (!mesUpperCase) return '';
-    return this.monthNamesES[mesUpperCase] || mesUpperCase.charAt(0) + mesUpperCase.slice(1).toLowerCase();
+    const mesUpper = mesUpperCase.toUpperCase().trim();
+    return this.monthNamesES[mesUpper] || mesUpperCase.charAt(0) + mesUpperCase.slice(1).toLowerCase();
   }
   
   formatCurrency(amount: number): string {
@@ -482,21 +689,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 0;
   }
   
+  // ✅ CORREGIDO: Buscar por mes en los datos cargados
   getDiferencia(mes: string): number {
     const real = this.monthlyIncomeData.find((item: MonthlyIncomeItem) => item.mes === mes);
     const esperado = this.expectedIncomeData.find((item: ExpectedIncomeItem) => item.mes === mes);
     
-    if (!real || !esperado) return 0;
+    const realTotal = real ? real.total : 0;
+    const esperadoTotal = esperado ? esperado.totalEsperado : 0;
     
-    return real.total - esperado.totalEsperado;
+    return realTotal - esperadoTotal;
   }
   
+  // ✅ CORREGIDO: Calcular porcentaje correctamente
   getPorcentajeCumplimiento(mes: string): number {
     const real = this.monthlyIncomeData.find((item: MonthlyIncomeItem) => item.mes === mes);
     const esperado = this.expectedIncomeData.find((item: ExpectedIncomeItem) => item.mes === mes);
     
-    if (!real || !esperado || esperado.totalEsperado === 0) return 0;
+    const realTotal = real ? real.total : 0;
+    const esperadoTotal = esperado ? esperado.totalEsperado : 0;
     
-    return (real.total / esperado.totalEsperado) * 100;
+    if (esperadoTotal === 0) return 0;
+    
+    return (realTotal / esperadoTotal) * 100;
   }
 }

@@ -1,3 +1,4 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
 
 // ✅ Importaciones de componentes existentes
@@ -14,29 +15,40 @@ import { PlanesComponent } from './planes/planes.component';
 import { SectoresComponent } from './sectores/sectores.component';
 import { TarifasComponent } from './tarifas/tarifas.component';
 import { PermisosComponent } from './permisos/permisos.component';
+import { AdministrarUsuariosComponent } from './administrar-usuarios/administrar-usuarios.component';
+import { BitacoraComponent } from './bitacora/bitacora.component';
 
-// ✅ Importaciones de los NUEVOS componentes
+// ✅ Importaciones de los componentes adicionales
 import { TiposServicioComponent } from './tipos-servicio/tipos-servicio.component';
 import { EstadosComponent } from './estados/estados.component';
 
 // ✅ Importaciones de Guards
 import { AuthGuard } from './auth.guard';
 import { PermissionGuard } from './guards/permission.guard';
-import { AdministrarUsuariosComponent } from './administrar-usuarios/administrar-usuarios.component';
-import { BitacoraComponent } from './bitacora/bitacora.component';
 
 export const routes: Routes = [
-  // Ruta raíz - redirecciona al dashboard
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  
-  // Ruta de login (pública)
-  { path: 'login', component: LoginComponent },
+  // ============================================
+  // RUTA PÚBLICA - LOGIN (SIN GUARDS)
+  // ============================================
+  { 
+    path: 'login', 
+    component: LoginComponent 
+  },
   
   // ============================================
-  // RUTAS PROTEGIDAS CON PERMISOS
+  // RUTA RAÍZ - REDIRECCIÓN
+  // ============================================
+  { 
+    path: '', 
+    redirectTo: '/login', 
+    pathMatch: 'full' 
+  },
+  
+  // ============================================
+  // RUTAS PROTEGIDAS CON AUTENTICACIÓN Y PERMISOS
   // ============================================
   
-  // Dashboard - Accesible para todos los usuarios autenticados
+  // Dashboard - Requiere autenticación y permiso
   { 
     path: 'dashboard', 
     component: DashboardComponent, 
@@ -48,17 +60,16 @@ export const routes: Routes = [
   // GESTIÓN DE USUARIOS
   // ============================================
   { 
+    path: 'administrar-usuarios', 
+    component: AdministrarUsuariosComponent, 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permissions: ['usuarios.leer'] }
+  },
+  { 
     path: 'crear-usuario', 
     component: CrearUsuarioComponent, 
     canActivate: [AuthGuard, PermissionGuard],
     data: { permissions: ['usuarios.crear'] }
-  },
-
-  { 
-  path: 'administrar-usuarios', 
-  component: AdministrarUsuariosComponent, 
-  canActivate: [AuthGuard, PermissionGuard],
-  data: { permissions: ['usuarios.leer'] }
   },
   
   // ============================================
@@ -167,6 +178,11 @@ export const routes: Routes = [
     data: { permissions: ['bitacora.leer'] }
   },
   
-  // Ruta para cualquier ruta no definida - redirecciona al dashboard
-  { path: '**', redirectTo: '/dashboard' }
+  // ============================================
+  // RUTA WILDCARD - MANEJO DE 404
+  // ============================================
+  { 
+    path: '**', 
+    redirectTo: '/login' 
+  }
 ];

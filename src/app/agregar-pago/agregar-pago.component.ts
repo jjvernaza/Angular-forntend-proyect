@@ -23,7 +23,7 @@ export class AgregarPagoComponent implements OnInit {
   terminoBusqueda: string = '';
   filtroAnio: string = 'todos';
   aniosDisponibles: number[] = [];
-  mensajeExito = false;
+  mensajeExito: string = '';
   mensajeError = false;
   mensajeClienteNoEncontrado = false;
   isSubmitting = false;
@@ -32,6 +32,12 @@ export class AgregarPagoComponent implements OnInit {
   // Configuración para facturas
   mostrarSelectorMeses: boolean = false;
   mesesSeleccionados: number = 1;
+
+  // Configuración para edición y eliminación
+  modoEdicion: boolean = false;
+  pagoEnEdicion: any = null;
+  mostrarModalEliminar: boolean = false;
+  pagoAEliminar: any = null;
 
   // Lista de meses en español
   mesesDelAnio: string[] = [
@@ -45,6 +51,8 @@ export class AgregarPagoComponent implements OnInit {
   // ✅ Variables de permisos
   tienePermisoLeer: boolean = false;
   tienePermisoCrear: boolean = false;
+  tienePermisoActualizar: boolean = false;
+  tienePermisoEliminar: boolean = false;
 
   constructor(
     private fb: FormBuilder, 
@@ -103,10 +111,14 @@ export class AgregarPagoComponent implements OnInit {
   private verificarPermisos(): void {
     this.tienePermisoLeer = this.authService.hasPermission('pagos.leer');
     this.tienePermisoCrear = this.authService.hasPermission('pagos.crear');
+    this.tienePermisoActualizar = this.authService.hasPermission('pagos.actualizar');
+    this.tienePermisoEliminar = this.authService.hasPermission('pagos.eliminar');
     
     console.log('🔐 Permisos en agregar-pago:');
     console.log('   Leer:', this.tienePermisoLeer);
     console.log('   Crear:', this.tienePermisoCrear);
+    console.log('   Actualizar:', this.tienePermisoActualizar);
+    console.log('   Eliminar:', this.tienePermisoEliminar);
   }
 
   // ✅ Buscar Cliente - MEJORADO con búsqueda por nombre, apellido y teléfono
@@ -136,20 +148,11 @@ export class AgregarPagoComponent implements OnInit {
 
         // ✅ BÚSQUEDA MEJORADA: nombre, apellido, nombre completo, cédula y teléfono
         const clienteEncontrado = clientes.find((c: any) => {
-          // Buscar por nombre
           const coincideNombre = c.NombreCliente?.toLowerCase().includes(termino);
-          
-          // Buscar por apellido
           const coincideApellido = c.ApellidoCliente?.toLowerCase().includes(termino);
-          
-          // Buscar por nombre completo (nombre + apellido)
           const nombreCompleto = `${c.NombreCliente || ''} ${c.ApellidoCliente || ''}`.toLowerCase();
           const coincideNombreCompleto = nombreCompleto.includes(termino);
-          
-          // Buscar por cédula (exacta o parcial)
           const coincideCedula = c.Cedula?.includes(termino);
-          
-          // ✅ NUEVO: Buscar por teléfono (exacto o parcial)
           const coincideTelefono = c.Telefono?.includes(termino);
           
           return coincideNombre || coincideApellido || coincideNombreCompleto || 
@@ -233,7 +236,7 @@ export class AgregarPagoComponent implements OnInit {
 
     if (this.pagoForm.valid) {
       this.isSubmitting = true;
-      this.mensajeExito = false;
+      this.mensajeExito = '';
       this.mensajeError = false;
 
       const pagoData = {
@@ -246,48 +249,26 @@ export class AgregarPagoComponent implements OnInit {
       this.apiService.addPago(pagoData).subscribe(
         (response) => {
           console.log('✅ Pago registrado');
-          this.mensajeExito = true;
+          this.mensajeExito = 'Pago registrado correctamente';
           this.mensajeError = false;
           this.isSubmitting = false;
 
-          // Recargar todos los pagos del cliente
-          this.apiService.getPagosCliente(this.clienteSeleccionado.ID).subscribe(
-            (pagos) => {
-              this.pagosCliente = pagos || [];
-              this.filtrarPagos();
-
-              if (this.pagosCliente.length > 0) {
-                this.aniosDisponibles = [...new Set(this.pagosCliente.map(p => p.Ano))].sort();
-              }
-            },
-            (error) => console.error('❌ Error al recargar pagos:', error)
-          );
+          // Recargar pagos del cliente
+          this.recargarPagosCliente();
           
           // Generar automáticamente factura pagada
           if (response && response.payment) {
             this.generarFacturaPagada(this.clienteSeleccionado, response.payment);
           }
 
-          // Resetear campos del formulario excepto ClienteID
-          const clienteID = this.pagoForm.value.ClienteID;
-          this.pagoForm.reset();
-          
-          const today = new Date();
-          const currentMonth = this.mesesDelAnio[today.getMonth()];
-          
-          this.pagoForm.patchValue({
-            ClienteID: clienteID,
-            FechaPago: this.formatDate(today),
-            Mes: currentMonth,
-            Ano: today.getFullYear(),
-            Monto: this.clienteSeleccionado?.tarifa?.valor || ''
-          });
+          // Resetear formulario
+          this.resetFormulario();
 
-          setTimeout(() => (this.mensajeExito = false), 3000);
+          setTimeout(() => (this.mensajeExito = ''), 3000);
         },
         error => {
           console.error('❌ Error al agregar pago:', error);
-          this.mensajeExito = false;
+          this.mensajeExito = '';
           this.mensajeError = true;
           this.isSubmitting = false;
           this.errorMessage = error?.error?.message || 'Error al agregar pago';
@@ -299,6 +280,188 @@ export class AgregarPagoComponent implements OnInit {
         this.pagoForm.get(key)?.markAsTouched();
       });
     }
+  }
+
+  // ✅ NUEVA FUNCIÓN: Editar Pago
+  editarPago(pago: any): void {
+    if (!this.tienePermisoActualizar) {
+      alert('No tienes permisos para editar pagos.');
+      return;
+    }
+
+    console.log('✏️ Editando pago:', pago);
+
+    this.modoEdicion = true;
+    this.pagoEnEdicion = pago;
+
+    // Convertir fecha al formato correcto
+    const fechaPago = new Date(pago.FechaPago);
+    const fechaFormateada = this.formatDate(fechaPago);
+
+    // Cargar datos en el formulario
+    this.pagoForm.patchValue({
+      ClienteID: pago.ClienteID,
+      FechaPago: fechaFormateada,
+      Mes: pago.Mes,
+      Ano: pago.Ano,
+      Monto: pago.Monto,
+      Metodo_de_PagoID: pago.Metodo_de_PagoID
+    });
+
+    // Scroll al formulario
+    setTimeout(() => {
+      const formulario = document.querySelector('form');
+      if (formulario) {
+        formulario.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  }
+
+  // ✅ NUEVA FUNCIÓN: Actualizar Pago
+  actualizarPago(): void {
+    if (!this.tienePermisoActualizar) {
+      alert('No tienes permisos para actualizar pagos.');
+      return;
+    }
+
+    if (this.pagoForm.valid && this.pagoEnEdicion) {
+      this.isSubmitting = true;
+      this.mensajeExito = '';
+      this.mensajeError = false;
+
+      const pagoData = {
+        FechaPago: this.pagoForm.value.FechaPago,
+        Mes: this.pagoForm.value.Mes,
+        Ano: this.pagoForm.value.Ano,
+        Monto: this.pagoForm.value.Monto,
+        Metodo_de_PagoID: parseInt(this.pagoForm.value.Metodo_de_PagoID, 10)
+      };
+
+      console.log('📝 Actualizando pago ID:', this.pagoEnEdicion.ID, pagoData);
+
+      this.apiService.updatePago(this.pagoEnEdicion.ID, pagoData).subscribe(
+        (response) => {
+          console.log('✅ Pago actualizado');
+          this.mensajeExito = 'Pago actualizado correctamente';
+          this.mensajeError = false;
+          this.isSubmitting = false;
+
+          // Recargar pagos del cliente
+          this.recargarPagosCliente();
+
+          // Cancelar modo edición
+          this.cancelarEdicion();
+
+          setTimeout(() => (this.mensajeExito = ''), 3000);
+        },
+        error => {
+          console.error('❌ Error al actualizar pago:', error);
+          this.mensajeExito = '';
+          this.mensajeError = true;
+          this.isSubmitting = false;
+          this.errorMessage = error?.error?.message || 'Error al actualizar pago';
+          setTimeout(() => (this.mensajeError = false), 3000);
+        }
+      );
+    } else {
+      Object.keys(this.pagoForm.controls).forEach(key => {
+        this.pagoForm.get(key)?.markAsTouched();
+      });
+    }
+  }
+
+  // ✅ NUEVA FUNCIÓN: Cancelar Edición
+  cancelarEdicion(): void {
+    this.modoEdicion = false;
+    this.pagoEnEdicion = null;
+    this.resetFormulario();
+  }
+
+  // ✅ NUEVA FUNCIÓN: Confirmar Eliminación
+  confirmarEliminarPago(pago: any): void {
+    if (!this.tienePermisoEliminar) {
+      alert('No tienes permisos para eliminar pagos.');
+      return;
+    }
+
+    this.pagoAEliminar = pago;
+    this.mostrarModalEliminar = true;
+  }
+
+  // ✅ NUEVA FUNCIÓN: Eliminar Pago
+  eliminarPago(): void {
+    if (!this.tienePermisoEliminar || !this.pagoAEliminar) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    console.log('🗑️ Eliminando pago ID:', this.pagoAEliminar.ID);
+
+    this.apiService.deletePago(this.pagoAEliminar.ID).subscribe(
+      (response) => {
+        console.log('✅ Pago eliminado');
+        this.mensajeExito = 'Pago eliminado correctamente';
+        this.isSubmitting = false;
+
+        // Recargar pagos del cliente
+        this.recargarPagosCliente();
+
+        // Cerrar modal
+        this.cerrarModalEliminar();
+
+        setTimeout(() => (this.mensajeExito = ''), 3000);
+      },
+      error => {
+        console.error('❌ Error al eliminar pago:', error);
+        this.mensajeError = true;
+        this.isSubmitting = false;
+        this.errorMessage = error?.error?.message || 'Error al eliminar pago';
+        this.cerrarModalEliminar();
+        setTimeout(() => (this.mensajeError = false), 3000);
+      }
+    );
+  }
+
+  // ✅ NUEVA FUNCIÓN: Cerrar Modal de Eliminación
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.pagoAEliminar = null;
+  }
+
+  // ✅ NUEVA FUNCIÓN: Recargar Pagos del Cliente
+  private recargarPagosCliente(): void {
+    if (this.clienteSeleccionado) {
+      this.apiService.getPagosCliente(this.clienteSeleccionado.ID).subscribe(
+        (pagos) => {
+          this.pagosCliente = pagos || [];
+          this.filtrarPagos();
+
+          if (this.pagosCliente.length > 0) {
+            this.aniosDisponibles = [...new Set(this.pagosCliente.map(p => p.Ano))].sort();
+          } else {
+            this.aniosDisponibles = [];
+          }
+        },
+        (error) => console.error('❌ Error al recargar pagos:', error)
+      );
+    }
+  }
+
+  // ✅ NUEVA FUNCIÓN: Resetear Formulario
+  private resetFormulario(): void {
+    const clienteID = this.pagoForm.value.ClienteID;
+    this.pagoForm.reset();
+    
+    const today = new Date();
+    const currentMonth = this.mesesDelAnio[today.getMonth()];
+    
+    this.pagoForm.patchValue({
+      ClienteID: clienteID,
+      FechaPago: this.formatDate(today),
+      Mes: currentMonth,
+      Ano: today.getFullYear(),
+      Monto: this.clienteSeleccionado?.tarifa?.valor || ''
+    });
   }
 
   // Formatear fecha
@@ -315,6 +478,7 @@ export class AgregarPagoComponent implements OnInit {
     this.pagosFiltrados = [];
     this.aniosDisponibles = [];
     this.pagoForm.patchValue({ ClienteID: '' });
+    this.cancelarEdicion();
   }
 
   private resetPagos() {

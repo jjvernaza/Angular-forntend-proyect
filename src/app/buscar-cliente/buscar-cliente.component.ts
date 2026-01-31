@@ -13,21 +13,22 @@ import { FormsModule } from '@angular/forms';
 })
 export class BuscarClienteComponent implements OnInit {
   clientes: any[] = [];
-  clientesSinFiltrar: any[] = [];  // ✅ Para guardar todos los clientes
+  clientesSinFiltrar: any[] = [];
   tiposServicio: any[] = [];
   estados: any[] = [];
   planes: any[] = [];
   sectores: any[] = [];
   tarifas: any[] = [];
   
-  // ✅ Filtros actualizados con apellido y teléfono
+  // ✅ Filtros actualizados con estado
   filtro = { 
     id: '', 
     nombre: '', 
-    apellido: '',  // ✅ NUEVO
+    apellido: '',
     cedula: '', 
-    telefono: '',  // ✅ NUEVO
-    ubicacion: '' 
+    telefono: '',
+    ubicacion: '',
+    estado: ''  // ✅ NUEVO: Filtro de estado
   };
   
   modalEditar = false;
@@ -82,8 +83,8 @@ export class BuscarClienteComponent implements OnInit {
     this.apiService.getClientes().subscribe(
       (data: any) => {
         console.log('✅ Clientes cargados:', data.length);
-        this.clientesSinFiltrar = data;  // ✅ Guardar copia completa
-        this.clientes = data;  // Mostrar todos inicialmente
+        this.clientesSinFiltrar = data;
+        this.clientes = data;
       },
       (error) => {
         console.error('❌ Error al obtener clientes:', error);
@@ -107,6 +108,7 @@ export class BuscarClienteComponent implements OnInit {
     this.apiService.getEstados().subscribe(
       (data: any) => {
         this.estados = data;
+        console.log('✅ Estados cargados para filtro:', this.estados.length);
       },
       (error) => {
         console.error('Error al obtener estados:', error);
@@ -147,7 +149,7 @@ export class BuscarClienteComponent implements OnInit {
     );
   }
   
-  // ✅ Función de búsqueda mejorada con apellido y teléfono
+  // ✅ Función de búsqueda mejorada con filtro de estado
   buscarClientes() {
     if (!this.tienePermisoLeer) {
       alert('No tienes permisos para buscar clientes.');
@@ -165,7 +167,7 @@ export class BuscarClienteComponent implements OnInit {
       const cumpleNombre = this.filtro.nombre ? 
         cliente.NombreCliente?.toLowerCase().includes(this.filtro.nombre.toLowerCase().trim()) : true;
       
-      // ✅ NUEVO: Filtro por Apellido
+      // Filtro por Apellido
       const cumpleApellido = this.filtro.apellido ? 
         cliente.ApellidoCliente?.toLowerCase().includes(this.filtro.apellido.toLowerCase().trim()) : true;
       
@@ -173,7 +175,7 @@ export class BuscarClienteComponent implements OnInit {
       const cumpleCedula = this.filtro.cedula ? 
         cliente.Cedula?.trim() === this.filtro.cedula.trim() : true;
       
-      // ✅ NUEVO: Filtro por Teléfono
+      // Filtro por Teléfono
       const cumpleTelefono = this.filtro.telefono ? 
         cliente.Telefono?.includes(this.filtro.telefono.trim()) : true;
       
@@ -181,13 +183,18 @@ export class BuscarClienteComponent implements OnInit {
       const cumpleUbicacion = this.filtro.ubicacion ? 
         cliente.Ubicacion?.toLowerCase().includes(this.filtro.ubicacion.toLowerCase().trim()) : true;
       
-      return cumpleID && cumpleNombre && cumpleApellido && cumpleCedula && cumpleTelefono && cumpleUbicacion;
+      // ✅ NUEVO: Filtro por Estado
+      const cumpleEstado = this.filtro.estado ? 
+        cliente.EstadoID?.toString() === this.filtro.estado.toString() || 
+        cliente.estado?.ID?.toString() === this.filtro.estado.toString() : true;
+      
+      return cumpleID && cumpleNombre && cumpleApellido && cumpleCedula && cumpleTelefono && cumpleUbicacion && cumpleEstado;
     });
     
     console.log(`✅ Resultados de búsqueda: ${this.clientes.length} de ${this.clientesSinFiltrar.length}`);
   }
   
-  // ✅ NUEVA: Función para limpiar filtros
+  // ✅ Función para limpiar filtros actualizada
   limpiarFiltros(): void {
     this.filtro = { 
       id: '', 
@@ -195,9 +202,10 @@ export class BuscarClienteComponent implements OnInit {
       apellido: '', 
       cedula: '', 
       telefono: '', 
-      ubicacion: '' 
+      ubicacion: '',
+      estado: ''  // ✅ Limpiar también el filtro de estado
     };
-    this.clientes = [...this.clientesSinFiltrar];  // Restaurar todos los clientes
+    this.clientes = [...this.clientesSinFiltrar];
     console.log('🧹 Filtros limpiados');
   }
   

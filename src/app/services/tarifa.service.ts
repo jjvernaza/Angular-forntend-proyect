@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class TarifaService {
-  private apiUrl = 'https://api.ictlatam.com/api/tarifas';
+  private apiUrl = 'http://localhost:3000/api/tarifas';
 
   constructor(private http: HttpClient) { }
 

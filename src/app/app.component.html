@@ -1,5 +1,6 @@
-<div class="flex">
-  <!-- Sidebar - Solo UNA vez -->
+<!-- Solo mostrar sidebar cuando el usuario está autenticado -->
+<div class="flex" *ngIf="isAuthenticated; else loginView">
+  <!-- Sidebar - Solo cuando hay sesión activa -->
   <app-sidebar></app-sidebar>
   
   <!-- Contenido principal -->
@@ -7,3 +8,10 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<!-- Vista de login sin sidebar -->
+<ng-template #loginView>
+  <div class="w-full h-screen">
+    <router-outlet></router-outlet>
+  </div>
+</ng-template>

@@ -23,7 +23,7 @@ interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'https://api.ictlatam.com/api/users';
+  private apiUrl = 'http://localhost:3000/api/users';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser = this.currentUserSubject.asObservable();
 

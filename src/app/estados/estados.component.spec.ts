@@ -1,240 +1,482 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, ActivatedRoute } from '@angular/router';
+import { EstadosComponent } from './estados.component';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { of, throwError } from 'rxjs';
 
-type EstadoForm = {
-  ID: number | null;
-  Estado: string;
-  Color: string;
-};
+describe('EstadosComponent', () => {
+  let component: EstadosComponent;
+  let fixture: ComponentFixture<EstadosComponent>;
+  let apiService: jasmine.SpyObj<ApiService>;
+  let authService: jasmine.SpyObj<AuthService>;
+  let router: jasmine.SpyObj<Router>;
 
-@Component({
-  selector: 'app-estados',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './estados.component.html',
-  styleUrls: ['./estados.component.css']
-})
-export class EstadosComponent implements OnInit {
-  estados: any[] = [];
-
-  // Modal para agregar/editar
-  modalAbierto = false;
-  modalEliminar = false;
-  esEdicion = false;
-
-  // ✅ Formulario tipado (ID puede ser number o null)
-  estadoForm: EstadoForm = {
-    ID: null,
-    Estado: '',
-    Color: '#22c55e'
-  };
-
-  // Para eliminar
-  estadoEliminarId: number | null = null;
-  estadoEliminarNombre = '';
-
-  // Colores predefinidos para estados
-  coloresEstado = [
-    { nombre: 'Verde (Activo)', valor: '#22c55e' },
-    { nombre: 'Rojo (Inactivo)', valor: '#ef4444' },
-    { nombre: 'Amarillo (Suspendido)', valor: '#eab308' },
-    { nombre: 'Azul (Prueba)', valor: '#3b82f6' },
-    { nombre: 'Morado (Mantenimiento)', valor: '#8b5cf6' },
-    { nombre: 'Gris (Pendiente)', valor: '#6b7280' }
+  const mockEstados = [
+    { ID: 1, Estado: 'Activo', Color: '#22c55e' },
+    { ID: 2, Estado: 'Inactivo', Color: '#ef4444' },
+    { ID: 3, Estado: 'Suspendido', Color: '#eab308' }
   ];
 
-  // ✅ Variables de permisos
-  tienePermisoLeer: boolean = false;
-  tienePermisoCrear: boolean = false;
-  tienePermisoActualizar: boolean = false;
-  tienePermisoEliminar: boolean = false;
+  beforeEach(async () => {
+    const apiSpy = jasmine.createSpyObj('ApiService', [
+      'getEstados',
+      'createEstado',
+      'updateEstado',
+      'deleteEstado'
+    ]);
+    const authSpy = jasmine.createSpyObj('AuthService', ['hasPermission']);
+    const routerSpy = jasmine.createSpyObj('Router', ['navigate'], {
+      events: of(),
+      url: '/estados'
+    });
 
-  constructor(
-    private apiService: ApiService,
-    private authService: AuthService
-  ) {}
-
-  ngOnInit(): void {
-    this.verificarPermisos();
-
-    if (this.tienePermisoLeer) {
-      this.cargarEstados();
-    }
-  }
-
-  private verificarPermisos(): void {
-    this.tienePermisoLeer = this.authService.hasPermission('estados.leer');
-    this.tienePermisoCrear = this.authService.hasPermission('estados.crear');
-    this.tienePermisoActualizar = this.authService.hasPermission('estados.actualizar');
-    this.tienePermisoEliminar = this.authService.hasPermission('estados.eliminar');
-
-    console.log('🔐 Permisos en estados:');
-    console.log('   Leer:', this.tienePermisoLeer);
-    console.log('   Crear:', this.tienePermisoCrear);
-    console.log('   Actualizar:', this.tienePermisoActualizar);
-    console.log('   Eliminar:', this.tienePermisoEliminar);
-  }
-
-  cargarEstados(): void {
-    if (!this.tienePermisoLeer) {
-      console.log('❌ Sin permisos para leer estados');
-      return;
-    }
-
-    this.apiService.getEstados().subscribe(
-      (data: any) => {
-        console.log('✅ Estados recibidos:', data);
-        this.estados = data;
+    const activatedRouteMock = {
+      snapshot: {
+        params: {},
+        queryParams: {},
+        data: {},
+        url: []
       },
-      (error) => {
-        console.error('❌ Error al obtener estados:', error);
-        alert('Error al cargar estados: ' + (error.error?.message || 'Error desconocido'));
-      }
-    );
-  }
-
-  abrirModalAgregar(): void {
-    if (!this.tienePermisoCrear) {
-      alert('No tienes permisos para crear estados.');
-      return;
-    }
-
-    this.esEdicion = false;
-    this.estadoForm = {
-      ID: null,
-      Estado: '',
-      Color: '#22c55e'
+      params: of({}),
+      queryParams: of({}),
+      data: of({})
     };
-    this.modalAbierto = true;
-  }
 
-  abrirModalEditar(estado: any): void {
-    if (!this.tienePermisoActualizar) {
-      alert('No tienes permisos para editar estados.');
-      return;
-    }
+    await TestBed.configureTestingModule({
+      imports: [EstadosComponent],
+      providers: [
+        { provide: ApiService, useValue: apiSpy },
+        { provide: AuthService, useValue: authSpy },
+        { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: activatedRouteMock }
+      ]
+    }).compileComponents();
 
-    this.esEdicion = true;
-    this.estadoForm = {
-      ID: estado.ID,
-      Estado: estado.Estado,
-      Color: estado.Color || '#22c55e'
-    };
-    this.modalAbierto = true;
-  }
+    apiService = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
+    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
-  guardarEstado(): void {
-    if (!this.estadoForm.Estado.trim()) {
-      alert('El nombre del estado es obligatorio');
-      return;
-    }
+    authService.hasPermission.and.returnValue(false);
+    apiService.getEstados.and.returnValue(of([]));
 
-    if (this.esEdicion) {
-      if (!this.tienePermisoActualizar) {
-        alert('No tienes permisos para actualizar estados.');
-        return;
-      }
+    fixture = TestBed.createComponent(EstadosComponent);
+    component = fixture.componentInstance;
+  });
 
-      if (this.estadoForm.ID == null) {
-        alert('Error: ID del estado inválido');
-        return;
-      }
+  it('debe crear el componente', () => {
+    expect(component).toBeTruthy();
+  });
 
-      console.log('📝 Actualizando estado:', this.estadoForm);
-      this.apiService.updateEstado(this.estadoForm.ID, this.estadoForm).subscribe(
-        () => {
-          this.modalAbierto = false;
-          this.cargarEstados();
-          alert('Estado actualizado correctamente');
-        },
-        (error) => {
-          console.error('❌ Error al actualizar:', error);
-          alert('Error al actualizar el estado: ' + (error.error?.message || 'Error desconocido'));
-        }
-      );
-    } else {
-      if (!this.tienePermisoCrear) {
-        alert('No tienes permisos para crear estados.');
-        return;
-      }
+  it('debe inicializar colores predefinidos', () => {
+    expect(component.coloresEstado.length).toBe(6);
+    expect(component.coloresEstado[0].valor).toBe('#22c55e');
+  });
 
-      console.log('➕ Creando estado:', this.estadoForm);
-      this.apiService.createEstado(this.estadoForm).subscribe(
-        () => {
-          this.modalAbierto = false;
-          this.cargarEstados();
-          alert('Estado creado correctamente');
-        },
-        (error) => {
-          console.error('❌ Error al crear:', error);
-          alert('Error al crear el estado: ' + (error.error?.message || 'Error desconocido'));
-        }
-      );
-    }
-  }
+  describe('ngOnInit', () => {
+    it('debe verificar permisos y cargar estados si tiene permiso de lectura', () => {
+      authService.hasPermission.and.callFake((permiso: string) => {
+        return permiso === 'estados.leer';
+      });
+      apiService.getEstados.and.returnValue(of(mockEstados));
 
-  abrirModalEliminar(estado: any): void {
-    if (!this.tienePermisoEliminar) {
-      alert('No tienes permisos para eliminar estados.');
-      return;
-    }
+      component.ngOnInit();
 
-    this.estadoEliminarId = estado.ID;
-    this.estadoEliminarNombre = estado.Estado;
-    this.modalEliminar = true;
-  }
+      expect(component.tienePermisoLeer).toBe(true);
+      expect(component.tienePermisoCrear).toBe(false);
+      expect(component.tienePermisoActualizar).toBe(false);
+      expect(component.tienePermisoEliminar).toBe(false);
+      expect(apiService.getEstados).toHaveBeenCalled();
+      expect(component.estados).toEqual(mockEstados);
+    });
 
-  eliminarEstado(): void {
-    if (!this.tienePermisoEliminar) {
-      alert('No tienes permisos para eliminar estados.');
-      return;
-    }
+    it('no debe cargar estados si no tiene permiso de lectura', () => {
+      authService.hasPermission.and.returnValue(false);
 
-    if (this.estadoEliminarId) {
-      console.log('🗑️ Eliminando estado:', this.estadoEliminarId);
-      this.apiService.deleteEstado(this.estadoEliminarId).subscribe(
-        () => {
-          this.modalEliminar = false;
-          this.cargarEstados();
-          alert('Estado eliminado correctamente');
-        },
-        (error) => {
-          console.error('❌ Error al eliminar:', error);
-          alert('Error al eliminar el estado: ' + (error.error?.message || 'Error desconocido'));
-        }
-      );
-    }
-  }
+      component.ngOnInit();
 
-  cerrarModal(): void {
-    this.modalAbierto = false;
-    this.modalEliminar = false;
-  }
+      expect(component.tienePermisoLeer).toBe(false);
+      expect(apiService.getEstados).not.toHaveBeenCalled();
+    });
 
-  getEstadoColor(estado: string): string {
-    switch (estado?.toLowerCase()) {
-      case 'activo': return '#22c55e';
-      case 'inactivo': return '#ef4444';
-      case 'suspendido': return '#eab308';
-      case 'prueba': return '#3b82f6';
-      case 'mantenimiento': return '#8b5cf6';
-      default: return '#6b7280';
-    }
-  }
+    it('debe establecer todos los permisos correctamente', () => {
+      authService.hasPermission.and.returnValue(true);
+      apiService.getEstados.and.returnValue(of(mockEstados));
 
-  getTextColor(backgroundColor: string): string {
-    if (!backgroundColor) return '#000000';
+      component.ngOnInit();
 
-    const hex = backgroundColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const luminosity = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      expect(component.tienePermisoLeer).toBe(true);
+      expect(component.tienePermisoCrear).toBe(true);
+      expect(component.tienePermisoActualizar).toBe(true);
+      expect(component.tienePermisoEliminar).toBe(true);
+    });
+  });
 
-    return luminosity > 0.5 ? '#000000' : '#ffffff';
-  }
-}
+  describe('cargarEstados', () => {
+    it('debe cargar estados exitosamente', () => {
+      component.tienePermisoLeer = true;
+      apiService.getEstados.and.returnValue(of(mockEstados));
+
+      component.cargarEstados();
+
+      expect(apiService.getEstados).toHaveBeenCalled();
+      expect(component.estados).toEqual(mockEstados);
+    });
+
+    it('no debe cargar si no tiene permiso de lectura', () => {
+      component.tienePermisoLeer = false;
+
+      component.cargarEstados();
+
+      expect(apiService.getEstados).not.toHaveBeenCalled();
+    });
+
+    it('debe manejar error al cargar estados', () => {
+      component.tienePermisoLeer = true;
+      const error = { error: { message: 'Error de red' } };
+      apiService.getEstados.and.returnValue(throwError(() => error));
+      spyOn(window, 'alert');
+
+      component.cargarEstados();
+
+      expect(window.alert).toHaveBeenCalledWith('Error al cargar estados: Error de red');
+    });
+
+    it('debe manejar error sin mensaje específico', () => {
+      component.tienePermisoLeer = true;
+      apiService.getEstados.and.returnValue(throwError(() => new Error('Error')));
+      spyOn(window, 'alert');
+
+      component.cargarEstados();
+
+      expect(window.alert).toHaveBeenCalledWith('Error al cargar estados: Error desconocido');
+    });
+  });
+
+  describe('abrirModalAgregar', () => {
+    it('debe abrir modal si tiene permiso de crear', () => {
+      component.tienePermisoCrear = true;
+
+      component.abrirModalAgregar();
+
+      expect(component.modalAbierto).toBe(true);
+      expect(component.esEdicion).toBe(false);
+      expect(component.estadoForm.ID).toBeNull();
+      expect(component.estadoForm.Estado).toBe('');
+      expect(component.estadoForm.Color).toBe('#22c55e');
+    });
+
+    it('debe mostrar alerta si no tiene permiso de crear', () => {
+      component.tienePermisoCrear = false;
+      spyOn(window, 'alert');
+
+      component.abrirModalAgregar();
+
+      expect(window.alert).toHaveBeenCalledWith('No tienes permisos para crear estados.');
+      expect(component.modalAbierto).toBe(false);
+    });
+  });
+
+  describe('abrirModalEditar', () => {
+    it('debe abrir modal con datos del estado si tiene permiso de actualizar', () => {
+      component.tienePermisoActualizar = true;
+      const estadoEditar: any = { ID: 1, Estado: 'Activo', Color: '#22c55e' };
+
+      component.abrirModalEditar(estadoEditar);
+
+      expect(component.modalAbierto).toBe(true);
+      expect(component.esEdicion).toBe(true);
+      expect(component.estadoForm.ID).toBe(1 as any);
+      expect(component.estadoForm.Estado).toBe('Activo');
+      expect(component.estadoForm.Color).toBe('#22c55e');
+    });
+
+    it('debe manejar estado sin color', () => {
+      component.tienePermisoActualizar = true;
+      const estadoSinColor: any = { ID: 1, Estado: 'Activo' };
+
+      component.abrirModalEditar(estadoSinColor);
+
+      expect(component.modalAbierto).toBe(true);
+      expect(component.esEdicion).toBe(true);
+      expect(component.estadoForm.ID).toBe(1 as any);
+      expect(component.estadoForm.Estado).toBe('Activo');
+      expect(component.estadoForm.Color).toBe('#22c55e');
+    });
+
+    it('debe mostrar alerta si no tiene permiso de actualizar', () => {
+      component.tienePermisoActualizar = false;
+      const estadoEditar: any = { ID: 1, Estado: 'Activo', Color: '#22c55e' };
+      spyOn(window, 'alert');
+
+      component.abrirModalEditar(estadoEditar);
+
+      expect(window.alert).toHaveBeenCalledWith('No tienes permisos para editar estados.');
+      expect(component.modalAbierto).toBe(false);
+    });
+  });
+
+  describe('guardarEstado', () => {
+    it('debe crear estado exitosamente', () => {
+      component.esEdicion = false;
+      component.tienePermisoCrear = true;
+      component.estadoForm = {
+        ID: null,
+        Estado: 'Activo',
+        Color: '#22c55e'
+      };
+      apiService.createEstado.and.returnValue(of({}));
+      spyOn(component, 'cargarEstados');
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(apiService.createEstado).toHaveBeenCalledWith(component.estadoForm);
+      expect(component.modalAbierto).toBe(false);
+      expect(component.cargarEstados).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith('Estado creado correctamente');
+    });
+
+    it('debe actualizar estado exitosamente', () => {
+      component.esEdicion = true;
+      component.tienePermisoActualizar = true;
+      component.estadoForm = {
+        ID: 1 as any,
+        Estado: 'Activo',
+        Color: '#22c55e'
+      };
+      apiService.updateEstado.and.returnValue(of({}));
+      spyOn(component, 'cargarEstados');
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(apiService.updateEstado).toHaveBeenCalledWith(1, component.estadoForm);
+      expect(component.modalAbierto).toBe(false);
+      expect(component.cargarEstados).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith('Estado actualizado correctamente');
+    });
+
+    it('debe mostrar alerta si el estado está vacío', () => {
+      component.tienePermisoCrear = true;
+      component.estadoForm = {
+        ID: null,
+        Estado: '  ',
+        Color: '#22c55e'
+      };
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('El nombre del estado es obligatorio');
+      expect(apiService.createEstado).not.toHaveBeenCalled();
+      expect(apiService.updateEstado).not.toHaveBeenCalled();
+    });
+
+    it('debe mostrar alerta si no tiene permiso de crear', () => {
+      component.esEdicion = false;
+      component.tienePermisoCrear = false;
+      component.estadoForm = {
+        ID: null,
+        Estado: 'Activo',
+        Color: '#22c55e'
+      };
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('No tienes permisos para crear estados.');
+      expect(apiService.createEstado).not.toHaveBeenCalled();
+    });
+
+    it('debe mostrar alerta si no tiene permiso de actualizar', () => {
+      component.esEdicion = true;
+      component.tienePermisoActualizar = false;
+      component.estadoForm = {
+        ID: 1 as any,
+        Estado: 'Activo',
+        Color: '#22c55e'
+      };
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('No tienes permisos para actualizar estados.');
+      expect(apiService.updateEstado).not.toHaveBeenCalled();
+    });
+
+    it('debe manejar error al crear', () => {
+      component.esEdicion = false;
+      component.tienePermisoCrear = true;
+      component.estadoForm = {
+        ID: null,
+        Estado: 'Activo',
+        Color: '#22c55e'
+      };
+      const error = { error: { message: 'Error al crear' } };
+      apiService.createEstado.and.returnValue(throwError(() => error));
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('Error al crear el estado: Error al crear');
+    });
+
+    it('debe manejar error al actualizar', () => {
+      component.esEdicion = true;
+      component.tienePermisoActualizar = true;
+      component.estadoForm = {
+        ID: 1 as any,
+        Estado: 'Activo',
+        Color: '#22c55e'
+      };
+      const error = { error: { message: 'Error al actualizar' } };
+      apiService.updateEstado.and.returnValue(throwError(() => error));
+      spyOn(window, 'alert');
+
+      component.guardarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('Error al actualizar el estado: Error al actualizar');
+    });
+  });
+
+  describe('abrirModalEliminar', () => {
+    it('debe abrir modal de eliminar si tiene permiso', () => {
+      component.tienePermisoEliminar = true;
+      const estadoEliminar: any = { ID: 1, Estado: 'Activo', Color: '#22c55e' };
+
+      component.abrirModalEliminar(estadoEliminar);
+
+      expect(component.modalEliminar).toBe(true);
+      expect(component.estadoEliminarId).toBe(1);
+      expect(component.estadoEliminarNombre).toBe('Activo');
+    });
+
+    it('debe mostrar alerta si no tiene permiso de eliminar', () => {
+      component.tienePermisoEliminar = false;
+      const estadoEliminar: any = { ID: 1, Estado: 'Activo', Color: '#22c55e' };
+      spyOn(window, 'alert');
+
+      component.abrirModalEliminar(estadoEliminar);
+
+      expect(window.alert).toHaveBeenCalledWith('No tienes permisos para eliminar estados.');
+      expect(component.modalEliminar).toBe(false);
+    });
+  });
+
+  describe('eliminarEstado', () => {
+    it('debe eliminar estado exitosamente', () => {
+      component.tienePermisoEliminar = true;
+      component.estadoEliminarId = 1;
+      apiService.deleteEstado.and.returnValue(of({}));
+      spyOn(component, 'cargarEstados');
+      spyOn(window, 'alert');
+
+      component.eliminarEstado();
+
+      expect(apiService.deleteEstado).toHaveBeenCalledWith(1);
+      expect(component.modalEliminar).toBe(false);
+      expect(component.cargarEstados).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith('Estado eliminado correctamente');
+    });
+
+    it('no debe eliminar si no tiene permiso', () => {
+      component.tienePermisoEliminar = false;
+      component.estadoEliminarId = 1;
+      spyOn(window, 'alert');
+
+      component.eliminarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('No tienes permisos para eliminar estados.');
+      expect(apiService.deleteEstado).not.toHaveBeenCalled();
+    });
+
+    it('no debe eliminar si estadoEliminarId es null', () => {
+      component.tienePermisoEliminar = true;
+      component.estadoEliminarId = null;
+
+      component.eliminarEstado();
+
+      expect(apiService.deleteEstado).not.toHaveBeenCalled();
+    });
+
+    it('debe manejar error al eliminar', () => {
+      component.tienePermisoEliminar = true;
+      component.estadoEliminarId = 1;
+      const error = { error: { message: 'Estado en uso' } };
+      apiService.deleteEstado.and.returnValue(throwError(() => error));
+      spyOn(window, 'alert');
+
+      component.eliminarEstado();
+
+      expect(window.alert).toHaveBeenCalledWith('Error al eliminar el estado: Estado en uso');
+    });
+  });
+
+  describe('cerrarModal', () => {
+    it('debe cerrar ambos modales', () => {
+      component.modalAbierto = true;
+      component.modalEliminar = true;
+
+      component.cerrarModal();
+
+      expect(component.modalAbierto).toBe(false);
+      expect(component.modalEliminar).toBe(false);
+    });
+  });
+
+  describe('getEstadoColor', () => {
+    it('debe retornar color verde para estado Activo', () => {
+      expect(component.getEstadoColor('Activo')).toBe('#22c55e');
+      expect(component.getEstadoColor('activo')).toBe('#22c55e');
+    });
+
+    it('debe retornar color rojo para estado Inactivo', () => {
+      expect(component.getEstadoColor('Inactivo')).toBe('#ef4444');
+      expect(component.getEstadoColor('INACTIVO')).toBe('#ef4444');
+    });
+
+    it('debe retornar color amarillo para estado Suspendido', () => {
+      expect(component.getEstadoColor('Suspendido')).toBe('#eab308');
+    });
+
+    it('debe retornar color azul para estado Prueba', () => {
+      expect(component.getEstadoColor('Prueba')).toBe('#3b82f6');
+    });
+
+    it('debe retornar color morado para estado Mantenimiento', () => {
+      expect(component.getEstadoColor('Mantenimiento')).toBe('#8b5cf6');
+    });
+
+    it('debe retornar color gris por defecto', () => {
+      expect(component.getEstadoColor('Desconocido')).toBe('#6b7280');
+      expect(component.getEstadoColor('')).toBe('#6b7280');
+    });
+  });
+
+  describe('getTextColor', () => {
+    it('debe retornar negro para fondos claros', () => {
+      expect(component.getTextColor('#ffffff')).toBe('#000000');
+      expect(component.getTextColor('#eab308')).toBe('#000000');
+    });
+
+    it('debe retornar blanco para fondos oscuros', () => {
+      expect(component.getTextColor('#000000')).toBe('#ffffff');
+      expect(component.getTextColor('#3b82f6')).toBe('#ffffff');
+    });
+
+    it('debe retornar negro para color vacío', () => {
+      expect(component.getTextColor('')).toBe('#000000');
+    });
+
+    it('debe calcular correctamente para verde', () => {
+      const color = component.getTextColor('#22c55e');
+      expect(color).toBe('#000000');
+    });
+
+    it('debe calcular correctamente para rojo', () => {
+      const color = component.getTextColor('#ef4444');
+      expect(color).toBe('#ffffff');
+    });
+  });
+});

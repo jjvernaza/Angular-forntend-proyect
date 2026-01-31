@@ -7,7 +7,7 @@
     <p>No tienes permisos para ver clientes.</p>
   </div>
 
-  <!-- Filtros de búsqueda en una sola línea -->  
+  <!-- Filtros de búsqueda -->  
   <div *ngIf="tienePermisoLeer" class="flex items-center mb-4 space-x-2">
     <input type="text" 
            placeholder="Buscar por ID" 
@@ -39,6 +39,17 @@
            [(ngModel)]="filtro.ubicacion" 
            class="search-input"
            [disabled]="!tienePermisoLeer">
+    
+    <!-- ✅ NUEVO: Dropdown de Estados -->
+    <select 
+      [(ngModel)]="filtro.estado" 
+      class="search-input"
+      [disabled]="!tienePermisoLeer">
+      <option value="">Todos los estados</option>
+      <option *ngFor="let estado of estados" [value]="estado.ID">
+        {{ estado.Estado }}
+      </option>
+    </select>
     
     <button class="btn-search" 
             (click)="buscarClientes()"

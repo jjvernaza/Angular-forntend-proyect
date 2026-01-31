@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class MetodoPagoService {
-  private apiUrl = 'https://api.ictlatam.com/api/metodos-pago';
+  private apiUrl = 'http://localhost:3000/api/metodos-pago';
 
   constructor(private http: HttpClient) { }
 

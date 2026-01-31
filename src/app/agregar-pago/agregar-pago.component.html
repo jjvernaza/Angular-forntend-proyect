@@ -137,13 +137,34 @@
           </td>
           <td class="border px-4 py-2">{{ pago.metodoPago?.Metodo || 'Desconocido' }}</td>
           <td class="border px-4 py-2 text-center">
-            <button 
-              (click)="generarFacturaPagada(clienteSeleccionado, pago)" 
-              class="text-green-500 hover:text-green-700"
-              [disabled]="!tienePermisoLeer"
-              title="Generar factura pagada">
-              <i class="fas fa-receipt"></i>
-            </button>
+            <div class="flex justify-center gap-2">
+              <!-- Botón Factura Pagada -->
+              <button 
+                (click)="generarFacturaPagada(clienteSeleccionado, pago)" 
+                class="text-green-500 hover:text-green-700"
+                [disabled]="!tienePermisoLeer"
+                title="Generar factura pagada">
+                <i class="fas fa-receipt"></i>
+              </button>
+              
+              <!-- Botón Editar - Solo visible con permiso -->
+              <button 
+                *ngIf="tienePermisoActualizar"
+                (click)="editarPago(pago)" 
+                class="text-blue-500 hover:text-blue-700"
+                title="Editar pago">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              
+              <!-- Botón Eliminar - Solo visible con permiso -->
+              <button 
+                *ngIf="tienePermisoEliminar"
+                (click)="confirmarEliminarPago(pago)" 
+                class="text-red-500 hover:text-red-700"
+                title="Eliminar pago">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -156,9 +177,9 @@
     <p class="mt-2">No hay pagos registrados para este cliente.</p>
   </div>
 
-  <!-- 📝 Formulario de Agregar Pago - Solo visible con permiso crear -->
-  <form *ngIf="clienteSeleccionado && tienePermisoCrear" [formGroup]="pagoForm" (ngSubmit)="agregarPago()" class="bg-white shadow-md rounded-lg p-6 mt-6">
-    <h2 class="text-xl font-semibold mb-4">Registrar Nuevo Pago</h2>
+  <!-- 📝 Formulario de Agregar/Editar Pago - Solo visible con permiso crear o actualizar -->
+  <form *ngIf="clienteSeleccionado && (tienePermisoCrear || tienePermisoActualizar)" [formGroup]="pagoForm" (ngSubmit)="modoEdicion ? actualizarPago() : agregarPago()" class="bg-white shadow-md rounded-lg p-6 mt-6">
+    <h2 class="text-xl font-semibold mb-4">{{ modoEdicion ? 'Editar Pago' : 'Registrar Nuevo Pago' }}</h2>
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -166,7 +187,7 @@
         <input type="date" 
                formControlName="FechaPago" 
                class="input w-full"
-               [disabled]="!tienePermisoCrear">
+               [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
         <div *ngIf="pagoForm.get('FechaPago')?.invalid && pagoForm.get('FechaPago')?.touched" class="text-red-500 text-sm mt-1">
           Fecha de pago es obligatoria
         </div>
@@ -176,7 +197,7 @@
         <label class="label">Mes</label>
         <select formControlName="Mes" 
                 class="input w-full"
-                [disabled]="!tienePermisoCrear">
+                [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
           <option value="" disabled>Seleccione mes</option>
           <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
         </select>
@@ -189,7 +210,7 @@
         <label class="label">Año</label>
         <select formControlName="Ano" 
                 class="input w-full"
-                [disabled]="!tienePermisoCrear">
+                [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
           <option value="" disabled>Seleccione año</option>
           <option *ngFor="let anio of aniosDesde2024" [value]="anio">{{ anio }}</option>
         </select>
@@ -206,7 +227,7 @@
                  formControlName="Monto" 
                  class="input w-full" 
                  [value]="clienteSeleccionado?.tarifa?.valor || ''"
-                 [disabled]="!tienePermisoCrear">
+                 [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
         </div>
         <div *ngIf="pagoForm.get('Monto')?.invalid && pagoForm.get('Monto')?.touched" class="text-red-500 text-sm mt-1">
           Monto es obligatorio y debe ser mayor a 0
@@ -217,7 +238,7 @@
         <label class="label">Método de Pago</label>
         <select formControlName="Metodo_de_PagoID" 
                 class="input w-full"
-                [disabled]="!tienePermisoCrear">
+                [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
           <option value="" disabled>Seleccione método de pago</option>
           <option *ngFor="let metodo of metodosPago" [value]="metodo.ID">{{ metodo.Metodo }}</option>
         </select>
@@ -227,27 +248,66 @@
       </div>
     </div>
 
-    <div class="mt-6 flex justify-end">
+    <div class="mt-6 flex justify-end gap-2">
+      <!-- Botón Cancelar en modo edición -->
+      <button 
+        *ngIf="modoEdicion"
+        type="button"
+        (click)="cancelarEdicion()"
+        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+        Cancelar
+      </button>
+      
+      <!-- Botón principal -->
       <button 
         type="submit" 
         class="btn-primary"
-        [disabled]="pagoForm.invalid || isSubmitting || !tienePermisoCrear">
-        {{ isSubmitting ? 'Procesando...' : 'Registrar Pago' }}
+        [disabled]="pagoForm.invalid || isSubmitting || (!tienePermisoCrear && !modoEdicion) || (!tienePermisoActualizar && modoEdicion)">
+        {{ isSubmitting ? 'Procesando...' : (modoEdicion ? 'Actualizar Pago' : 'Registrar Pago') }}
       </button>
     </div>
 
     <div *ngIf="mensajeExito" class="alert-success mt-4">
-      <i class="fas fa-check-circle"></i> <span>Pago registrado correctamente</span>
+      <i class="fas fa-check-circle"></i> <span>{{ mensajeExito }}</span>
     </div>
 
     <div *ngIf="mensajeError" class="alert-error mt-4">
-      <i class="fas fa-times-circle"></i> <span>{{ errorMessage || 'Error al agregar pago' }}</span>
+      <i class="fas fa-times-circle"></i> <span>{{ errorMessage || 'Error al procesar pago' }}</span>
     </div>
   </form>
 
   <!-- ⚠️ Mensaje si no tiene permiso para crear pagos pero sí para ver -->
-  <div *ngIf="clienteSeleccionado && !tienePermisoCrear && tienePermisoLeer" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mt-6">
-    <p class="font-bold">Sin permisos para crear</p>
-    <p>No tienes permisos para registrar nuevos pagos. Solo puedes ver el historial.</p>
+  <div *ngIf="clienteSeleccionado && !tienePermisoCrear && !tienePermisoActualizar && tienePermisoLeer" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mt-6">
+    <p class="font-bold">Sin permisos para crear o editar</p>
+    <p>No tienes permisos para registrar o editar pagos. Solo puedes ver el historial.</p>
+  </div>
+
+  <!-- 🗑️ Modal de Confirmación de Eliminación -->
+  <div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold mb-4 text-red-600">
+        <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar Eliminación
+      </h3>
+      <p class="mb-4">¿Estás seguro que deseas eliminar este pago?</p>
+      <div *ngIf="pagoAEliminar" class="bg-gray-100 p-3 rounded mb-4">
+        <p><strong>ID:</strong> {{ pagoAEliminar.ID }}</p>
+        <p><strong>Fecha:</strong> {{ pagoAEliminar.FechaPago | date:'yyyy-MM-dd' }}</p>
+        <p><strong>Mes:</strong> {{ pagoAEliminar.Mes }} {{ pagoAEliminar.Ano }}</p>
+        <p><strong>Monto:</strong> {{ pagoAEliminar.Monto | currency }}</p>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button 
+          (click)="cerrarModalEliminar()" 
+          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+          Cancelar
+        </button>
+        <button 
+          (click)="eliminarPago()" 
+          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>
