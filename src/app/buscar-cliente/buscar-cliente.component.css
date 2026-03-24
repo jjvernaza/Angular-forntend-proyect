@@ -1,158 +1,156 @@
-/* ==========================
-✅ Reset Básico
-========================== */
+/* ============================================
+   BASE
+   ============================================ */
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
 }
 
-/* ==========================
-✅ Estilos Generales de la Tabla
-========================== */
-
-.table-container{
-margin-left: -30px;
-}
-
-table {
-  width: 100%;
-  margin: auto;
-  background: white;
-}
-
-th, td {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
-}
-
-/* ==========================
-✅ Estilos para los Inputs de Filtros
-========================== */
-.search-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
+/* ============================================
+   INPUTS DE BÚSQUEDA
+   ============================================ */
 .search-input {
-  width: 150px; /* Ajusta el ancho */
-  border: 1px solid #ccc;
-  padding: 8px;
-  border-radius: 5px;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  padding: 9px 12px;
+  border-radius: 6px;
   font-size: 14px;
-  transition: border-color 0.2s ease-in-out;
+  background-color: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input:focus {
   border-color: #2563eb;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* ==========================
-✅ Botones Generales
-========================== */
-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 5px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+.search-input:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 
-/* 🎯 Botón de Búsqueda */
-.btn-search {
-  background-color: #2563eb;
-  color: white;
-}
-
-.btn-search:hover {
-  background-color: #1e40af;
-}
-
-/* 🎯 Botón Guardar */
-.btn-save {
-  background-color: #10b981;
-  color: white;
-}
-
-.btn-save:hover {
-  background-color: #059669;
-}
-
-/* 🎯 Botón Cancelar */
-.btn-cancel {
-  background-color: #6b7280;
-  color: white;
-}
-
-.btn-cancel:hover {
-  background-color: #4b5563;
-}
-
-/* 🎯 Botón Eliminar */
-.btn-delete {
-  background-color: #ef4444;
-  color: white;
-}
-
-.btn-delete:hover {
-  background-color: #dc2626;
-}
-
-/* ==========================
-✅ Campos de Entrada Generales
-========================== */
+/* ============================================
+   CAMPOS DE FORMULARIO (modal editar)
+   ============================================ */
 .input-field {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   font-size: 14px;
-  background-color: #f9f9f9;
+  background-color: #f9fafb;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input-field:focus {
   border-color: #2563eb;
   outline: none;
-  background-color: white;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* ==========================
-✅ Modales (Edición y Eliminación)
-========================== */
-.fixed {
-  z-index: 50;
+/* ============================================
+   BOTONES
+   ============================================ */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s, opacity 0.2s;
+  gap: 6px;
 }
 
-.bg-black.bg-opacity-50 {
-  backdrop-filter: blur(4px);
+.btn-search {
+  background-color: #2563eb;
+  color: white;
 }
+.btn-search:hover:not(:disabled) { background-color: #1e40af; }
+.btn-search:disabled { background-color: #93c5fd; cursor: not-allowed; }
 
-.modal-container {
+.btn-save {
+  background-color: #10b981;
+  color: white;
+}
+.btn-save:hover { background-color: #059669; }
+
+.btn-cancel {
+  background-color: #6b7280;
+  color: white;
+}
+.btn-cancel:hover { background-color: #4b5563; }
+
+.btn-delete {
+  background-color: #ef4444;
+  color: white;
+}
+.btn-delete:hover { background-color: #dc2626; }
+
+/* ============================================
+   TABLA
+   ============================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.modal-header {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 15px;
+th {
+  background-color: #f3f4f6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
+td {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+tr:hover td { background-color: #f9fafb; }
+
+/* ============================================
+   MEDIA QUERIES
+   ============================================ */
+
+/* Tablet (max 1024px) */
+@media (max-width: 1024px) {
+  th, td { padding: 8px 10px; }
+}
+
+/* Móvil (max 768px) */
+@media (max-width: 768px) {
+  .btn-search,
+  .btn-cancel,
+  .btn-save,
+  .btn-delete {
+    width: 100%;
+    padding: 11px 16px;
+  }
+}
+
+/* Móvil pequeño (max 480px) */
+@media (max-width: 480px) {
+  .search-input,
+  .input-field {
+    font-size: 16px; /* Evita zoom en iOS */
+    padding: 10px 12px;
+  }
 }

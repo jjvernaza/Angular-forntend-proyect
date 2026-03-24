@@ -18,8 +18,6 @@ export class MorososComponent implements OnInit {
   isLoading: boolean = false;
   totalDeuda: number = 0;
   promedioMesesDeuda: number = 0;
-
-  // ✅ Variable de permisos
   tienePermiso: boolean = false;
 
   constructor(
@@ -29,10 +27,7 @@ export class MorososComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // ✅ Verificar permisos
     this.verificarPermisos();
-
-    // ✅ Solo cargar si tiene permisos
     if (this.tienePermiso) {
       this.cargarMorosos();
     }
@@ -40,26 +35,17 @@ export class MorososComponent implements OnInit {
 
   private verificarPermisos(): void {
     this.tienePermiso = this.authService.hasPermission('morosos.ver');
-    
-    console.log('🔐 Permisos en morosos:');
-    console.log('   Ver morosos:', this.tienePermiso);
   }
 
   cargarMorosos(): void {
-    if (!this.tienePermiso) {
-      console.log('❌ Sin permisos para cargar morosos');
-      return;
-    }
+    if (!this.tienePermiso) return;
 
     this.isLoading = true;
-    console.log(`📥 Cargando morosos con ${this.mesesDeudaSeleccionado} meses de deuda...`);
-
     this.apiService.getMorososPorMeses(this.mesesDeudaSeleccionado).subscribe({
       next: (data) => {
         this.morosos = data;
         this.calcularEstadisticas();
         this.isLoading = false;
-        console.log(`✅ ${this.morosos.length} clientes morosos cargados`);
       },
       error: (err) => {
         console.error('❌ Error al cargar morosos:', err);
@@ -70,14 +56,10 @@ export class MorososComponent implements OnInit {
   }
 
   calcularEstadisticas(): void {
-    this.totalDeuda = this.morosos.reduce((sum, cliente) => sum + cliente.MontoDeuda, 0);
+    this.totalDeuda = this.morosos.reduce((sum, c) => sum + c.MontoDeuda, 0);
     this.promedioMesesDeuda = this.morosos.length > 0
-      ? this.morosos.reduce((sum, cliente) => sum + cliente.MesesDeuda, 0) / this.morosos.length
+      ? this.morosos.reduce((sum, c) => sum + c.MesesDeuda, 0) / this.morosos.length
       : 0;
-    
-    console.log('📊 Estadísticas calculadas:');
-    console.log('   Total deuda:', this.totalDeuda);
-    console.log('   Promedio meses:', this.promedioMesesDeuda.toFixed(1));
   }
 
   registrarPago(clienteId: number): void {
@@ -85,9 +67,10 @@ export class MorososComponent implements OnInit {
       alert('No tienes permisos para registrar pagos.');
       return;
     }
-
-    console.log('💰 Navegando a registrar pago para cliente:', clienteId);
-    this.router.navigate(['/agregar-pago'], { queryParams: { clienteId } });
+    // Navega pasando el ID del cliente como queryParam
+    this.router.navigate(['/agregar-pago'], {
+      queryParams: { clienteId: clienteId }
+    });
   }
 
   downloadMorososExcel(): void {
@@ -95,8 +78,6 @@ export class MorososComponent implements OnInit {
       alert('No tienes permisos para descargar reportes.');
       return;
     }
-
-    console.log(`📥 Descargando Excel de morosos (${this.mesesDeudaSeleccionado} meses)...`);
 
     this.apiService.exportClientsMorososToExcel(this.mesesDeudaSeleccionado).subscribe({
       next: (blob: Blob) => {
@@ -109,10 +90,9 @@ export class MorososComponent implements OnInit {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        console.log('✅ Excel de morosos descargado');
       },
       error: (error: any) => {
-        console.error('❌ Error al descargar Excel de morosos:', error);
+        console.error('❌ Error al descargar Excel:', error);
         alert('Error al generar el archivo Excel de morosos.');
       }
     });

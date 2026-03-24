@@ -6,8 +6,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class PermisoService {
-  private apiUrl = 'http://localhost:3000/api/permisos';
-  private usuarioPermisoUrl = 'http://localhost:3000/api/usuario-permisos';
+  private apiUrl = 'http://api.ictlatam.com/api/permisos';
+  private usuarioPermisoUrl = 'http://api.ictlatam.com/api/usuario-permisos';
 
   constructor(private http: HttpClient) { }
 

@@ -1,0 +1,67 @@
+/* ============================================
+   BASE
+   ============================================ */
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   TABLA
+   ============================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ============================================
+   PRE (datos JSON)
+   ============================================ */
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ============================================
+   PAGINACIÓN — numeros de página
+   ============================================ */
+.pagina-activa {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* ============================================
+   MEDIA QUERIES
+   ============================================ */
+
+/* Tablet (max 1024px) */
+@media (max-width: 1024px) {
+  pre {
+    font-size: 0.7rem;
+  }
+}
+
+/* Móvil (max 768px) */
+@media (max-width: 768px) {
+  pre {
+    font-size: 0.7rem;
+    max-height: 150px;
+  }
+}
+
+/* Móvil pequeño (max 480px) */
+@media (max-width: 480px) {
+  pre {
+    font-size: 0.65rem;
+  }
+}

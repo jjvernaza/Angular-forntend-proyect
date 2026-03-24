@@ -1,93 +1,97 @@
-<div class="p-6">
-  <h1 class="text-4xl font-bold mb-4">Registrar Pagos</h1>
+<div class="p-3 sm:p-6">
+  <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-gray-800">Registrar Pagos</h1>
 
-  <!-- ✅ Verificar permiso para acceder al módulo -->
-  <div *ngIf="!tienePermisoLeer && !tienePermisoCrear" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+  <!-- Acceso Denegado -->
+  <div *ngIf="!tienePermisoLeer && !tienePermisoCrear"
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
     <p class="font-bold">Acceso Denegado</p>
-    <p>No tienes permisos para acceder a este módulo.</p>
+    <p class="text-sm">No tienes permisos para acceder a este módulo.</p>
   </div>
 
-<!-- 🔍 Búsqueda, filtro por año y botón en una sola fila -->
-<div *ngIf="tienePermisoLeer || tienePermisoCrear" class="busqueda-horizontal">
-  <input type="text" 
-         [(ngModel)]="terminoBusqueda" 
-         placeholder="Buscar por nombre, apellido, cédula o teléfono" 
-         class="input input-wide"
-         [disabled]="!tienePermisoLeer">
-  
-  <select [(ngModel)]="filtroAnio" 
-          (change)="filtrarPagos()" 
-          class="input select-sm"
-          [disabled]="!tienePermisoLeer">
-    <option value="todos">Todos los Pagos</option>
-    <option *ngFor="let anio of aniosDisponibles" [value]="anio">{{ anio }}</option>
-  </select>
+  <!-- Búsqueda y filtros -->
+  <div *ngIf="tienePermisoLeer || tienePermisoCrear" class="busqueda-horizontal mb-6">
+    <input
+      type="text"
+      [(ngModel)]="terminoBusqueda"
+      placeholder="Buscar por nombre, apellido, cédula o teléfono"
+      class="input input-wide"
+      [disabled]="!tienePermisoLeer">
 
-  <button class="btn-primary btn-sm" 
-          (click)="buscarCliente()"
-          [disabled]="!tienePermisoLeer">
-    <i class="fas fa-search mr-1"></i> Buscar
-  </button>
-</div>
+    <select
+      [(ngModel)]="filtroAnio"
+      (change)="filtrarPagos()"
+      class="input select-sm"
+      [disabled]="!tienePermisoLeer">
+      <option value="todos">Todos los Pagos</option>
+      <option *ngFor="let anio of aniosDisponibles" [value]="anio">{{ anio }}</option>
+    </select>
 
-  <!-- ❗ Mensajes de estado -->
+    <button
+      class="btn-primary btn-sm"
+      (click)="buscarCliente()"
+      [disabled]="!tienePermisoLeer">
+      <i class="fas fa-search mr-1"></i> Buscar
+    </button>
+  </div>
+
+  <!-- Cliente no encontrado -->
   <div *ngIf="mensajeClienteNoEncontrado" class="alert-error mb-4">
     <i class="fas fa-exclamation-circle"></i> Cliente no encontrado
   </div>
 
-  <!-- ℹ️ Información del cliente -->
-  <div *ngIf="clienteSeleccionado && tienePermisoLeer" class="bg-gray-100 p-4 rounded mb-4 shadow-md">
-    <h2 class="text-xl font-semibold">Información del Cliente</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-      <div>
+  <!-- Información del cliente -->
+  <div *ngIf="clienteSeleccionado && tienePermisoLeer"
+       class="bg-gray-100 p-4 rounded-lg mb-4 shadow-sm">
+    <h2 class="text-lg sm:text-xl font-semibold mb-3">Información del Cliente</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div class="space-y-1 text-sm">
         <p><strong>Nombre:</strong> {{ clienteSeleccionado.NombreCliente }} {{ clienteSeleccionado.ApellidoCliente }}</p>
         <p><strong>Cédula:</strong> {{ clienteSeleccionado.Cedula }}</p>
         <p><strong>Teléfono:</strong> {{ clienteSeleccionado.Telefono }}</p>
       </div>
-      <div>
+      <div class="space-y-1 text-sm">
         <p><strong>Plan:</strong> {{ clienteSeleccionado.plan?.nombre }} - {{ clienteSeleccionado.plan?.velocidad }}</p>
         <p><strong>Tarifa:</strong> {{ clienteSeleccionado.tarifa?.valor | currency }}</p>
         <p><strong>Sector:</strong> {{ clienteSeleccionado.sector?.nombre }}</p>
       </div>
-      <div>
-        <p><strong>Fecha de Instalación:</strong> {{ clienteSeleccionado.FechaInstalacion | date:'yyyy-MM-dd' }}</p>
+      <div class="space-y-1 text-sm sm:col-span-2 lg:col-span-1">
+        <p><strong>Instalación:</strong> {{ clienteSeleccionado.FechaInstalacion | date:'yyyy-MM-dd' }}</p>
         <p><strong>Estado:</strong> {{ clienteSeleccionado.estado?.Estado || 'No disponible' }}</p>
-        <p><strong>Tipo de Servicio:</strong> {{ clienteSeleccionado.tipoServicio?.Tipo }}</p>
+        <p><strong>Tipo:</strong> {{ clienteSeleccionado.tipoServicio?.Tipo }}</p>
       </div>
     </div>
-    
-    <!-- Sección de Facturas - Solo visible con permiso -->
-    <div *ngIf="tienePermisoLeer" class="mt-4 flex flex-wrap gap-2">
-      <button 
-        (click)="generarFacturaPorPagar(clienteSeleccionado, 1)" 
-        class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center"
+
+    <!-- Botones de factura -->
+    <div *ngIf="tienePermisoLeer" class="mt-4 flex flex-col sm:flex-row flex-wrap gap-2">
+      <button
+        (click)="generarFacturaPorPagar(clienteSeleccionado, 1)"
+        class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center justify-center gap-2"
         [disabled]="!tienePermisoLeer">
-        <i class="fas fa-file-invoice mr-2"></i> Factura por Pagar (1 mes)
+        <i class="fas fa-file-invoice"></i> Factura por Pagar (1 mes)
       </button>
-      
-      <div class="relative">
-        <button 
-          (click)="abrirSelectorMeses()" 
-          class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center"
+
+      <div class="relative w-full sm:w-auto">
+        <button
+          (click)="abrirSelectorMeses()"
+          class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center justify-center gap-2"
           [disabled]="!tienePermisoLeer">
-          <i class="fas fa-file-invoice mr-2"></i> Factura por Pagar (varios meses)
+          <i class="fas fa-file-invoice"></i> Factura por Pagar (varios meses)
         </button>
-        
+
         <!-- Selector de meses -->
-        <div *ngIf="mostrarSelectorMeses" class="absolute mt-2 bg-white shadow-md rounded p-2 z-10 w-64">
+        <div *ngIf="mostrarSelectorMeses"
+             class="absolute left-0 mt-2 bg-white shadow-lg rounded-lg p-3 z-10 w-full sm:w-64">
           <div class="mb-2">
-            <label class="block text-sm mb-1">Meses adeudados:</label>
-            <input 
-              type="number" 
-              min="1" 
-              max="12" 
-              [(ngModel)]="mesesSeleccionados" 
-              class="border rounded px-2 py-1 w-full"
-            />
+            <label class="block text-sm font-medium mb-1">Meses adeudados:</label>
+            <input
+              type="number" min="1" max="12"
+              [(ngModel)]="mesesSeleccionados"
+              class="input w-full">
           </div>
-          <button 
-            (click)="generarFacturaPorPagar(clienteSeleccionado, mesesSeleccionados); cerrarSelectorMeses()" 
-            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded">
+          <button
+            (click)="generarFacturaPorPagar(clienteSeleccionado, mesesSeleccionados); cerrarSelectorMeses()"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium">
             Generar Factura
           </button>
         </div>
@@ -95,174 +99,205 @@
     </div>
   </div>
 
-  <!-- 📜 Tabla de pagos CON INFORMACIÓN HISTÓRICA -->
-  <div *ngIf="pagosFiltrados.length > 0 && tienePermisoLeer" class="overflow-x-auto">
-    <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
-      <thead class="bg-gray-200 text-gray-700">
-        <tr>
-          <th class="border px-4 py-2 text-left">ID Pago</th>
-          <th class="border px-4 py-2 text-left">Fecha</th>
-          <th class="border px-4 py-2 text-left">Mes</th>
-          <th class="border px-4 py-2 text-left">Año</th>
-          <th class="border px-4 py-2 text-right">Monto</th>
-          <th class="border px-4 py-2 text-left">Plan</th>
-          <th class="border px-4 py-2 text-left">Tarifa</th>
-          <th class="border px-4 py-2 text-left">Método</th>
-          <th class="border px-4 py-2 text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let pago of pagosFiltrados">
-          <td class="border px-4 py-2">{{ pago.ID }}</td>
-          <td class="border px-4 py-2">{{ pago.FechaPago | date:'yyyy-MM-dd' }}</td>
-          <td class="border px-4 py-2">{{ pago.Mes }}</td>
-          <td class="border px-4 py-2">{{ pago.Ano }}</td>
-          <td class="border px-4 py-2 text-right">{{ pago.Monto | currency }}</td>
-          <td class="border px-4 py-2">
-            <span *ngIf="pago.planHistorico; else noPlanHistorico">
-              {{ pago.planHistorico.nombre }}
-              <small class="block text-gray-500">{{ pago.velocidad_contratada }}</small>
-            </span>
-            <ng-template #noPlanHistorico>
-              <span class="text-gray-400">Sin registro</span>
-            </ng-template>
-          </td>
-          <td class="border px-4 py-2">
-            <span *ngIf="pago.tarifaHistorica; else noTarifaHistorica" class="font-semibold text-green-600">
-              {{ pago.tarifaHistorica.valor | currency }}
-            </span>
-            <ng-template #noTarifaHistorica>
-              <span class="text-gray-400">Sin registro</span>
-            </ng-template>
-          </td>
-          <td class="border px-4 py-2">{{ pago.metodoPago?.Metodo || 'Desconocido' }}</td>
-          <td class="border px-4 py-2 text-center">
-            <div class="flex justify-center gap-2">
-              <!-- Botón Factura Pagada -->
-              <button 
-                (click)="generarFacturaPagada(clienteSeleccionado, pago)" 
-                class="text-green-500 hover:text-green-700"
-                [disabled]="!tienePermisoLeer"
-                title="Generar factura pagada">
-                <i class="fas fa-receipt"></i>
-              </button>
-              
-              <!-- Botón Editar - Solo visible con permiso -->
-              <button 
-                *ngIf="tienePermisoActualizar"
-                (click)="editarPago(pago)" 
-                class="text-blue-500 hover:text-blue-700"
-                title="Editar pago">
-                <i class="fas fa-pencil-alt"></i>
-              </button>
-              
-              <!-- Botón Eliminar - Solo visible con permiso -->
-              <button 
-                *ngIf="tienePermisoEliminar"
-                (click)="confirmarEliminarPago(pago)" 
-                class="text-red-500 hover:text-red-700"
-                title="Eliminar pago">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Tabla de pagos: desktop -->
+  <div *ngIf="pagosFiltrados.length > 0 && tienePermisoLeer">
+
+    <!-- Tabla visible en md+ -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
+        <thead class="bg-gray-200 text-gray-700">
+          <tr>
+            <th class="border px-4 py-2 text-left text-xs uppercase">ID Pago</th>
+            <th class="border px-4 py-2 text-left text-xs uppercase">Fecha</th>
+            <th class="border px-4 py-2 text-left text-xs uppercase">Mes</th>
+            <th class="border px-4 py-2 text-left text-xs uppercase">Año</th>
+            <th class="border px-4 py-2 text-right text-xs uppercase">Monto</th>
+            <th class="border px-4 py-2 text-left text-xs uppercase">Plan</th>
+            <th class="border px-4 py-2 text-left text-xs uppercase">Tarifa</th>
+            <th class="border px-4 py-2 text-left text-xs uppercase">Método</th>
+            <th class="border px-4 py-2 text-center text-xs uppercase">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let pago of pagosFiltrados" class="hover:bg-gray-50 transition-colors">
+            <td class="border px-4 py-2 text-sm">{{ pago.ID }}</td>
+            <td class="border px-4 py-2 text-sm">{{ pago.FechaPago | date:'yyyy-MM-dd' }}</td>
+            <td class="border px-4 py-2 text-sm">{{ pago.Mes }}</td>
+            <td class="border px-4 py-2 text-sm">{{ pago.Ano }}</td>
+            <td class="border px-4 py-2 text-sm text-right">{{ pago.Monto | currency }}</td>
+            <td class="border px-4 py-2 text-sm">
+              <span *ngIf="pago.planHistorico; else noPlan">
+                {{ pago.planHistorico.nombre }}
+                <small class="block text-gray-400">{{ pago.velocidad_contratada }}</small>
+              </span>
+              <ng-template #noPlan><span class="text-gray-400">Sin registro</span></ng-template>
+            </td>
+            <td class="border px-4 py-2 text-sm">
+              <span *ngIf="pago.tarifaHistorica; else noTarifa" class="font-semibold text-green-600">
+                {{ pago.tarifaHistorica.valor | currency }}
+              </span>
+              <ng-template #noTarifa><span class="text-gray-400">Sin registro</span></ng-template>
+            </td>
+            <td class="border px-4 py-2 text-sm">{{ pago.metodoPago?.Metodo || 'Desconocido' }}</td>
+            <td class="border px-4 py-2">
+              <div class="flex justify-center gap-3">
+                <button (click)="generarFacturaPagada(clienteSeleccionado, pago)"
+                        class="text-green-500 hover:text-green-700 transition-colors"
+                        title="Generar factura pagada">
+                  <i class="fas fa-receipt"></i>
+                </button>
+                <button *ngIf="tienePermisoActualizar"
+                        (click)="editarPago(pago)"
+                        class="text-blue-500 hover:text-blue-700 transition-colors"
+                        title="Editar pago">
+                  <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button *ngIf="tienePermisoEliminar"
+                        (click)="confirmarEliminarPago(pago)"
+                        class="text-red-500 hover:text-red-700 transition-colors"
+                        title="Eliminar pago">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Cards en móvil (< md) -->
+    <div class="md:hidden space-y-3">
+      <div *ngFor="let pago of pagosFiltrados"
+           class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+
+        <!-- Cabecera card -->
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <span class="text-xs font-semibold text-gray-500 uppercase">ID Pago</span>
+            <p class="font-bold text-gray-900">{{ pago.ID }}</p>
+          </div>
+          <span class="font-bold text-green-600 text-base">{{ pago.Monto | currency }}</span>
+        </div>
+
+        <!-- Datos -->
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 mb-3">
+          <div><span class="font-semibold text-gray-700">Fecha:</span> {{ pago.FechaPago | date:'yyyy-MM-dd' }}</div>
+          <div><span class="font-semibold text-gray-700">Período:</span> {{ pago.Mes }} {{ pago.Ano }}</div>
+          <div>
+            <span class="font-semibold text-gray-700">Plan:</span>
+            {{ pago.planHistorico?.nombre || 'Sin registro' }}
+          </div>
+          <div>
+            <span class="font-semibold text-gray-700">Tarifa:</span>
+            {{ pago.tarifaHistorica ? (pago.tarifaHistorica.valor | currency) : 'Sin registro' }}
+          </div>
+          <div class="col-span-2">
+            <span class="font-semibold text-gray-700">Método:</span>
+            {{ pago.metodoPago?.Metodo || 'Desconocido' }}
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex gap-2 pt-2 border-t border-gray-100">
+          <button (click)="generarFacturaPagada(clienteSeleccionado, pago)"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-green-600 hover:text-green-800 py-1.5 rounded hover:bg-green-50 transition-colors">
+            <i class="fas fa-receipt"></i> Factura
+          </button>
+          <button *ngIf="tienePermisoActualizar"
+                  (click)="editarPago(pago)"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-blue-600 hover:text-blue-800 py-1.5 rounded hover:bg-blue-50 transition-colors">
+            <i class="fas fa-pencil-alt"></i> Editar
+          </button>
+          <button *ngIf="tienePermisoEliminar"
+                  (click)="confirmarEliminarPago(pago)"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-red-600 hover:text-red-800 py-1.5 rounded hover:bg-red-50 transition-colors">
+            <i class="fas fa-trash-alt"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- ⚠️ No hay pagos -->
-  <div *ngIf="clienteSeleccionado && pagosFiltrados.length === 0 && tienePermisoLeer" class="text-gray-500 text-center mt-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
-    <i class="fas fa-info-circle text-xl"></i> 
-    <p class="mt-2">No hay pagos registrados para este cliente.</p>
+  <!-- Sin pagos -->
+  <div *ngIf="clienteSeleccionado && pagosFiltrados.length === 0 && tienePermisoLeer"
+       class="text-gray-500 text-center mt-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
+    <i class="fas fa-info-circle text-xl block mb-2"></i>
+    <p class="text-sm">No hay pagos registrados para este cliente.</p>
   </div>
 
-  <!-- 📝 Formulario de Agregar/Editar Pago - Solo visible con permiso crear o actualizar -->
-  <form *ngIf="clienteSeleccionado && (tienePermisoCrear || tienePermisoActualizar)" [formGroup]="pagoForm" (ngSubmit)="modoEdicion ? actualizarPago() : agregarPago()" class="bg-white shadow-md rounded-lg p-6 mt-6">
-    <h2 class="text-xl font-semibold mb-4">{{ modoEdicion ? 'Editar Pago' : 'Registrar Nuevo Pago' }}</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <!-- Formulario Agregar/Editar Pago -->
+  <form *ngIf="clienteSeleccionado && (tienePermisoCrear || tienePermisoActualizar)"
+        [formGroup]="pagoForm"
+        (ngSubmit)="modoEdicion ? actualizarPago() : agregarPago()"
+        class="bg-white shadow-md rounded-lg p-4 sm:p-6 mt-6">
+
+    <h2 class="text-lg sm:text-xl font-semibold mb-4">
+      {{ modoEdicion ? 'Editar Pago' : 'Registrar Nuevo Pago' }}
+    </h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label class="label">Fecha de Pago</label>
-        <input type="date" 
-               formControlName="FechaPago" 
-               class="input w-full"
+        <input type="date" formControlName="FechaPago" class="input w-full"
                [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
-        <div *ngIf="pagoForm.get('FechaPago')?.invalid && pagoForm.get('FechaPago')?.touched" class="text-red-500 text-sm mt-1">
-          Fecha de pago es obligatoria
-        </div>
+        <div *ngIf="pagoForm.get('FechaPago')?.invalid && pagoForm.get('FechaPago')?.touched"
+             class="text-red-500 text-xs mt-1">Fecha de pago es obligatoria</div>
       </div>
 
       <div>
         <label class="label">Mes</label>
-        <select formControlName="Mes" 
-                class="input w-full"
+        <select formControlName="Mes" class="input w-full"
                 [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
           <option value="" disabled>Seleccione mes</option>
           <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
         </select>
-        <div *ngIf="pagoForm.get('Mes')?.invalid && pagoForm.get('Mes')?.touched" class="text-red-500 text-sm mt-1">
-          Mes es obligatorio
-        </div>
+        <div *ngIf="pagoForm.get('Mes')?.invalid && pagoForm.get('Mes')?.touched"
+             class="text-red-500 text-xs mt-1">Mes es obligatorio</div>
       </div>
 
       <div>
         <label class="label">Año</label>
-        <select formControlName="Ano" 
-                class="input w-full"
+        <select formControlName="Ano" class="input w-full"
                 [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
           <option value="" disabled>Seleccione año</option>
           <option *ngFor="let anio of aniosDesde2024" [value]="anio">{{ anio }}</option>
         </select>
-        <div *ngIf="pagoForm.get('Ano')?.invalid && pagoForm.get('Ano')?.touched" class="text-red-500 text-sm mt-1">
-          Año es obligatorio
-        </div>
+        <div *ngIf="pagoForm.get('Ano')?.invalid && pagoForm.get('Ano')?.touched"
+             class="text-red-500 text-xs mt-1">Año es obligatorio</div>
       </div>
 
       <div>
         <label class="label">Monto</label>
-        <div class="flex items-center">
-          <span class="mr-2">$</span>
-          <input type="number" 
-                 formControlName="Monto" 
-                 class="input w-full" 
+        <div class="flex items-center gap-2">
+          <span class="text-gray-600 font-medium">$</span>
+          <input type="number" formControlName="Monto" class="input w-full"
                  [value]="clienteSeleccionado?.tarifa?.valor || ''"
                  [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
         </div>
-        <div *ngIf="pagoForm.get('Monto')?.invalid && pagoForm.get('Monto')?.touched" class="text-red-500 text-sm mt-1">
-          Monto es obligatorio y debe ser mayor a 0
-        </div>
+        <div *ngIf="pagoForm.get('Monto')?.invalid && pagoForm.get('Monto')?.touched"
+             class="text-red-500 text-xs mt-1">Monto obligatorio y mayor a 0</div>
       </div>
 
-      <div class="md:col-span-2">
+      <div class="sm:col-span-2">
         <label class="label">Método de Pago</label>
-        <select formControlName="Metodo_de_PagoID" 
-                class="input w-full"
+        <select formControlName="Metodo_de_PagoID" class="input w-full"
                 [disabled]="!tienePermisoCrear && !tienePermisoActualizar">
           <option value="" disabled>Seleccione método de pago</option>
           <option *ngFor="let metodo of metodosPago" [value]="metodo.ID">{{ metodo.Metodo }}</option>
         </select>
-        <div *ngIf="pagoForm.get('Metodo_de_PagoID')?.invalid && pagoForm.get('Metodo_de_PagoID')?.touched" class="text-red-500 text-sm mt-1">
-          Método de pago es obligatorio
-        </div>
+        <div *ngIf="pagoForm.get('Metodo_de_PagoID')?.invalid && pagoForm.get('Metodo_de_PagoID')?.touched"
+             class="text-red-500 text-xs mt-1">Método de pago es obligatorio</div>
       </div>
     </div>
 
-    <div class="mt-6 flex justify-end gap-2">
-      <!-- Botón Cancelar en modo edición -->
-      <button 
-        *ngIf="modoEdicion"
-        type="button"
-        (click)="cancelarEdicion()"
-        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+    <!-- Botones -->
+    <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+      <button *ngIf="modoEdicion" type="button" (click)="cancelarEdicion()"
+              class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
         Cancelar
       </button>
-      
-      <!-- Botón principal -->
-      <button 
-        type="submit" 
-        class="btn-primary"
-        [disabled]="pagoForm.invalid || isSubmitting || (!tienePermisoCrear && !modoEdicion) || (!tienePermisoActualizar && modoEdicion)">
+      <button type="submit" class="btn-primary w-full sm:w-auto"
+              [disabled]="pagoForm.invalid || isSubmitting || (!tienePermisoCrear && !modoEdicion) || (!tienePermisoActualizar && modoEdicion)">
         {{ isSubmitting ? 'Procesando...' : (modoEdicion ? 'Actualizar Pago' : 'Registrar Pago') }}
       </button>
     </div>
@@ -270,41 +305,39 @@
     <div *ngIf="mensajeExito" class="alert-success mt-4">
       <i class="fas fa-check-circle"></i> <span>{{ mensajeExito }}</span>
     </div>
-
     <div *ngIf="mensajeError" class="alert-error mt-4">
       <i class="fas fa-times-circle"></i> <span>{{ errorMessage || 'Error al procesar pago' }}</span>
     </div>
   </form>
 
-  <!-- ⚠️ Mensaje si no tiene permiso para crear pagos pero sí para ver -->
-  <div *ngIf="clienteSeleccionado && !tienePermisoCrear && !tienePermisoActualizar && tienePermisoLeer" class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mt-6">
+  <!-- Sin permiso de crear -->
+  <div *ngIf="clienteSeleccionado && !tienePermisoCrear && !tienePermisoActualizar && tienePermisoLeer"
+       class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mt-6 text-sm">
     <p class="font-bold">Sin permisos para crear o editar</p>
     <p>No tienes permisos para registrar o editar pagos. Solo puedes ver el historial.</p>
   </div>
 
-  <!-- 🗑️ Modal de Confirmación de Eliminación -->
-  <div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-      <h3 class="text-xl font-bold mb-4 text-red-600">
+  <!-- Modal Eliminar -->
+  <div *ngIf="mostrarModalEliminar"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+    <div class="bg-white rounded-t-2xl sm:rounded-lg p-5 sm:p-6 w-full sm:max-w-md max-h-[92vh] overflow-y-auto">
+      <h3 class="text-lg sm:text-xl font-bold mb-4 text-red-600">
         <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar Eliminación
       </h3>
-      <p class="mb-4">¿Estás seguro que deseas eliminar este pago?</p>
-      <div *ngIf="pagoAEliminar" class="bg-gray-100 p-3 rounded mb-4">
+      <p class="text-sm text-gray-700 mb-4">¿Estás seguro que deseas eliminar este pago?</p>
+      <div *ngIf="pagoAEliminar" class="bg-gray-100 p-3 rounded-lg mb-4 text-sm space-y-1">
         <p><strong>ID:</strong> {{ pagoAEliminar.ID }}</p>
         <p><strong>Fecha:</strong> {{ pagoAEliminar.FechaPago | date:'yyyy-MM-dd' }}</p>
         <p><strong>Mes:</strong> {{ pagoAEliminar.Mes }} {{ pagoAEliminar.Ano }}</p>
         <p><strong>Monto:</strong> {{ pagoAEliminar.Monto | currency }}</p>
       </div>
-      <div class="flex justify-end gap-2">
-        <button 
-          (click)="cerrarModalEliminar()" 
-          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+        <button (click)="cerrarModalEliminar()"
+                class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
           Cancelar
         </button>
-        <button 
-          (click)="eliminarPago()" 
-          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          [disabled]="isSubmitting">
+        <button (click)="eliminarPago()" [disabled]="isSubmitting"
+                class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded disabled:bg-gray-400 transition-colors">
           {{ isSubmitting ? 'Eliminando...' : 'Eliminar' }}
         </button>
       </div>

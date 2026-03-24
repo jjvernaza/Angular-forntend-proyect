@@ -1,46 +1,69 @@
-/* 📌 Estilos Generales */
+/* ============================================
+   TIPOGRAFÍA Y BASE
+   ============================================ */
 body {
   font-family: 'Inter', sans-serif;
   margin: 0;
   background-color: #f8f9fa;
 }
 
-/* ✅ Labels */
+/* ============================================
+   LABELS
+   ============================================ */
 .label {
   display: block;
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 5px;
   color: #374151;
+  font-size: 0.875rem;
 }
 
-/* ✅ Inputs */
+/* ============================================
+   INPUTS
+   ============================================ */
 .input {
   width: 100%;
-  padding: 10px;
+  padding: 10px 12px;
   border: 1px solid #d1d5db;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 14px;
+  box-sizing: border-box;
+  background-color: #fff;
+  color: #111827;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input:focus {
   border-color: #2563eb;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* ✅ Botones */
+.input:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
 .btn-primary {
   background-color: #2563eb;
   color: white;
-  padding: 10px 16px;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 600;
   cursor: pointer;
-  text-align: center;
   border: none;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background-color: #1e40af;
 }
 
@@ -52,20 +75,61 @@ body {
 .btn-secondary {
   background-color: #6b7280;
   color: white;
-  padding: 10px 16px;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 600;
   cursor: pointer;
-  text-align: center;
   border: none;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-secondary:hover {
   background-color: #4b5563;
 }
 
-/* Errores de validación */
-.text-red-500 {
-  color: #ef4444;
+/* ============================================
+   MEDIA QUERIES
+   ============================================ */
+
+/* Móvil pequeño (< 480px) */
+@media (max-width: 480px) {
+  .label {
+    font-size: 0.8125rem;
+  }
+
+  .input {
+    font-size: 16px; /* Evita zoom automático en iOS */
+    padding: 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    font-size: 0.9375rem;
+    padding: 12px 16px;
+  }
+}
+
+/* Móvil (< 640px) */
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+}
+
+/* Tablet y desktop (>= 640px) */
+@media (min-width: 640px) {
+  .btn-primary,
+  .btn-secondary {
+    width: auto;
+  }
+
+  .input {
+    font-size: 14px;
+  }
 }

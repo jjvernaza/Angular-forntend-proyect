@@ -1,29 +1,57 @@
-/* src/app/login.component.css */
-.min-h-screen {
-    min-height: 100vh;
+/* ============================================
+   BASE
+   ============================================ */
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   INPUTS
+   ============================================ */
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ============================================
+   BOTÓN
+   ============================================ */
+button[type="submit"] {
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+button[type="submit"]:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   MEDIA QUERIES
+   ============================================ */
+
+/* Móvil pequeño (max 480px) */
+@media (max-width: 480px) {
+  input[type="text"],
+  input[type="password"] {
+    font-size: 16px; /* Evita zoom automático en iOS */
+    padding: 10px 14px;
   }
-  
-  .bg-gray-100 {
-    background-color: #f7fafc;
+
+  button[type="submit"] {
+    padding: 12px;
+    font-size: 0.9375rem;
   }
-  
-  .bg-white {
-    background-color: #ffffff;
-  }
-  
-  .bg-blue-500 {
-    background-color: #4299e1;
-  }
-  
-  .hover\:bg-blue-600:hover {
-    background-color: #3182ce;
-  }
-  
-  .text-gray-700 {
-    color: #4a5568;
-  }
-  
-  .text-white {
-    color: #ffffff;
-  }
-  
+}

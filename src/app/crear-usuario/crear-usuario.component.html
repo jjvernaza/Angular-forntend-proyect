@@ -1,84 +1,80 @@
-<div class="p-6 max-w-xl mx-auto">
-  <h1 class="text-4xl font-bold mb-6">Crear Usuario</h1>
-  
-  <!-- ✅ Verificar permiso para crear usuarios -->
-  <div *ngIf="!tienePermiso" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+<div class="p-3 sm:p-6 max-w-xl mx-auto">
+  <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 text-gray-800">Crear Usuario</h1>
+
+  <!-- Acceso Denegado -->
+  <div *ngIf="!tienePermiso"
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
     <p class="font-bold">Acceso Denegado</p>
-    <p>No tienes permisos para crear usuarios.</p>
-    <button routerLink="/dashboard" class="mt-2 btn-secondary">Volver al Dashboard</button>
+    <p class="text-sm">No tienes permisos para crear usuarios.</p>
+    <button routerLink="/dashboard"
+            class="mt-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 w-full sm:w-auto">
+      Volver al Dashboard
+    </button>
   </div>
-  
-  <form *ngIf="tienePermiso" [formGroup]="usuarioForm" (ngSubmit)="crearUsuario()" class="bg-white shadow-md rounded-lg p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <!-- Formulario -->
+  <form *ngIf="tienePermiso"
+        [formGroup]="usuarioForm"
+        (ngSubmit)="crearUsuario()"
+        class="bg-white shadow-md rounded-lg p-4 sm:p-6">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      <!-- Nombre -->
       <div>
         <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
-        <input 
-          id="nombre" 
-          formControlName="Nombre" 
-          type="text" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('Nombre')}"
-          [disabled]="!tienePermiso"
-        >
+        <input id="nombre" formControlName="Nombre" type="text"
+               class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [ngClass]="{'border-red-500': getFormErrors('Nombre')}"
+               [disabled]="!tienePermiso">
         <p *ngIf="getFormErrors('Nombre')" class="text-red-500 text-xs mt-1">
           Nombre es obligatorio
         </p>
       </div>
-      
+
+      <!-- Apellidos -->
       <div>
         <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
-        <input 
-          id="apellidos" 
-          formControlName="Apellidos" 
-          type="text" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('Apellidos')}"
-          [disabled]="!tienePermiso"
-        >
+        <input id="apellidos" formControlName="Apellidos" type="text"
+               class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [ngClass]="{'border-red-500': getFormErrors('Apellidos')}"
+               [disabled]="!tienePermiso">
         <p *ngIf="getFormErrors('Apellidos')" class="text-red-500 text-xs mt-1">
           Apellidos es obligatorio
         </p>
       </div>
-      
+
+      <!-- Cédula -->
       <div>
         <label for="cedula" class="block text-sm font-medium text-gray-700">Cédula</label>
-        <input 
-          id="cedula" 
-          formControlName="Cedula" 
-          type="text" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('Cedula')}"
-          [disabled]="!tienePermiso"
-        >
+        <input id="cedula" formControlName="Cedula" type="text"
+               class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [ngClass]="{'border-red-500': getFormErrors('Cedula')}"
+               [disabled]="!tienePermiso">
         <p *ngIf="getFormErrors('Cedula')" class="text-red-500 text-xs mt-1">
           Cédula es obligatoria y solo debe contener números
         </p>
       </div>
-      
+
+      <!-- Teléfono -->
       <div>
         <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
-        <input 
-          id="telefono" 
-          formControlName="Telefono" 
-          type="text" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('Telefono')}"
-          [disabled]="!tienePermiso"
-        >
+        <input id="telefono" formControlName="Telefono" type="text"
+               class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [ngClass]="{'border-red-500': getFormErrors('Telefono')}"
+               [disabled]="!tienePermiso">
         <p *ngIf="getFormErrors('Telefono')" class="text-red-500 text-xs mt-1">
           Teléfono es obligatorio y solo debe contener números
         </p>
       </div>
-      
+
+      <!-- Función -->
       <div>
         <label for="funcion" class="block text-sm font-medium text-gray-700">Función/Rol</label>
-        <select 
-          id="funcion" 
-          formControlName="Funcion" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('Funcion')}"
-          [disabled]="!tienePermiso"
-        >
+        <select id="funcion" formControlName="Funcion"
+                class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                [ngClass]="{'border-red-500': getFormErrors('Funcion')}"
+                [disabled]="!tienePermiso">
           <option value="" disabled>Seleccione una función</option>
           <option value="Administrador">Administrador</option>
           <option value="Operador">Operador</option>
@@ -90,46 +86,38 @@
           Función es obligatoria
         </p>
       </div>
-      
+
+      <!-- Usuario -->
       <div>
         <label for="username" class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
-        <input 
-          id="username" 
-          formControlName="User" 
-          type="text" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('User')}"
-          [disabled]="!tienePermiso"
-        >
+        <input id="username" formControlName="User" type="text"
+               class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [ngClass]="{'border-red-500': getFormErrors('User')}"
+               [disabled]="!tienePermiso">
         <p *ngIf="getFormErrors('User')" class="text-red-500 text-xs mt-1">
           Nombre de usuario es obligatorio
         </p>
       </div>
-      
+
+      <!-- Contraseña -->
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
-        <input 
-          id="password" 
-          formControlName="Password" 
-          type="password" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('Password')}"
-          [disabled]="!tienePermiso"
-        >
+        <input id="password" formControlName="Password" type="password"
+               class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+               [ngClass]="{'border-red-500': getFormErrors('Password')}"
+               [disabled]="!tienePermiso">
         <p *ngIf="getFormErrors('Password')" class="text-red-500 text-xs mt-1">
-          Contraseña es obligatoria y debe tener al menos 6 caracteres
+          Contraseña obligatoria, mínimo 6 caracteres
         </p>
       </div>
-      
+
+      <!-- Estado -->
       <div>
         <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
-        <select 
-          id="estado" 
-          formControlName="estado_id" 
-          class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          [ngClass]="{'border-red-500': getFormErrors('estado_id')}"
-          [disabled]="!tienePermiso"
-        >
+        <select id="estado" formControlName="estado_id"
+                class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                [ngClass]="{'border-red-500': getFormErrors('estado_id')}"
+                [disabled]="!tienePermiso">
           <option value="" disabled>Seleccione un estado</option>
           <option *ngFor="let estado of estados" [value]="estado.ID">
             {{ estado.Estado }}
@@ -139,9 +127,10 @@
           Estado es obligatorio
         </p>
       </div>
+
     </div>
-    
-    <!-- ✅ Sección de permisos MEJORADA - Solo visible si tiene permiso para asignar permisos -->
+
+    <!-- Sección de Permisos -->
     <div class="permisos-section" *ngIf="tienePermisoAsignarPermisos">
       <div class="permisos-header">
         <h3 class="permisos-title">
@@ -149,22 +138,19 @@
         </h3>
         <span class="permisos-counter">{{ selectedPermisos.length }} seleccionados</span>
       </div>
-      
+
       <div class="permisos-grid">
-        <div 
-          *ngFor="let permiso of permisos" 
-          class="permiso-item"
-          [ngClass]="{'selected': isPermisoSelected(permiso.id)}"
-          (click)="togglePermiso(permiso.id)">
-          <input 
-            type="checkbox"
-            [id]="'permiso_' + permiso.id"
-            [checked]="isPermisoSelected(permiso.id)"
-            (click)="$event.stopPropagation()"
-            (change)="togglePermiso(permiso.id)"
-            class="permiso-checkbox"
-            [disabled]="!tienePermisoAsignarPermisos"
-          >
+        <div *ngFor="let permiso of permisos"
+             class="permiso-item"
+             [ngClass]="{'selected': isPermisoSelected(permiso.id)}"
+             (click)="togglePermiso(permiso.id)">
+          <input type="checkbox"
+                 [id]="'permiso_' + permiso.id"
+                 [checked]="isPermisoSelected(permiso.id)"
+                 (click)="$event.stopPropagation()"
+                 (change)="togglePermiso(permiso.id)"
+                 class="permiso-checkbox"
+                 [disabled]="!tienePermisoAsignarPermisos">
           <div class="permiso-content">
             <span class="permiso-nombre">{{ permiso.nombre }}</span>
             <span *ngIf="permiso.descripcion" class="permiso-descripcion">
@@ -173,58 +159,60 @@
           </div>
         </div>
       </div>
-      
+
       <div class="permisos-info">
         <i class="fas fa-info-circle"></i>
-        <span>Seleccione los permisos que tendrá este usuario. Puede agregar o modificar permisos más adelante.</span>
+        <span>Seleccione los permisos que tendrá este usuario. Puede modificarlos más adelante.</span>
       </div>
     </div>
 
-    <!-- ⚠️ Advertencia si no tiene permiso para asignar permisos -->
+    <!-- Sin permiso para asignar permisos -->
     <div class="mt-6" *ngIf="!tienePermisoAsignarPermisos">
-      <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-        <p class="text-sm">
-          <i class="fas fa-info-circle"></i> 
-          No tienes permisos para asignar permisos a otros usuarios. El usuario se creará sin permisos asignados.
-        </p>
+      <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded text-sm">
+        <i class="fas fa-info-circle mr-1"></i>
+        No tienes permisos para asignar permisos a otros usuarios. El usuario se creará sin permisos asignados.
       </div>
     </div>
-    
-    <div class="mt-6 flex justify-end space-x-3">
-      <button 
-        type="button" 
-        class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
-        (click)="resetForm()"
-        [disabled]="isSubmitting || !tienePermiso"
-      >
+
+    <!-- Botones -->
+    <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+      <button type="button"
+              class="w-full sm:w-auto bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
+              (click)="resetForm()"
+              [disabled]="isSubmitting || !tienePermiso">
         Cancelar
       </button>
-      <button 
-        type="submit" 
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors flex items-center"
-        [disabled]="usuarioForm.invalid || isSubmitting || !tienePermiso"
-      >
-        <svg *ngIf="isSubmitting" class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <button type="submit"
+              class="w-full sm:w-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+              [disabled]="usuarioForm.invalid || isSubmitting || !tienePermiso">
+        <svg *ngIf="isSubmitting" class="animate-spin h-5 w-5"
+             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         <span>{{ isSubmitting ? 'Creando...' : 'Crear Usuario' }}</span>
       </button>
     </div>
+
   </form>
-  
-  <!-- Mensajes de alerta -->
-  <div *ngIf="successMessage" class="mt-4 p-3 bg-green-100 text-green-700 rounded-md flex items-center animate-fade-in">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+
+  <!-- Mensaje éxito -->
+  <div *ngIf="successMessage"
+       class="mt-4 p-3 bg-green-100 text-green-700 rounded-md flex items-center gap-2 animate-fade-in text-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
     </svg>
     {{ successMessage }}
   </div>
-  
-  <div *ngIf="errorMessage" class="mt-4 p-3 bg-red-100 text-red-700 rounded-md flex items-center animate-fade-in">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+
+  <!-- Mensaje error -->
+  <div *ngIf="errorMessage"
+       class="mt-4 p-3 bg-red-100 text-red-700 rounded-md flex items-center gap-2 animate-fade-in text-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
     </svg>
     {{ errorMessage }}
   </div>
+
 </div>

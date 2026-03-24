@@ -7,18 +7,19 @@ import { catchError } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000/api/clientes';
+  private baseUrl = 'http://api.ictlatam.com/api/clientes';
   
   constructor(private http: HttpClient) {}
   
   // Set headers for JSON content
-  private getHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    });
-  }
-  
+private getHeaders(): HttpHeaders {
+  const token = localStorage.getItem('token');
+  return new HttpHeaders({
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${token}`
+  });
+}
   // Handle errors?
   private handleError(error: any): Observable<never> {
     console.error('API Error:', error);
@@ -65,72 +66,72 @@ export class ApiService {
   
 
 getTiposServicio(): Observable<any[]> {
-  return this.http.get<any[]>('http://localhost:3000/api/servicios/tipos', { headers: this.getHeaders() })
+  return this.http.get<any[]>('http://api.ictlatam.com/api/servicios/tipos', { headers: this.getHeaders() })
     .pipe(catchError(this.handleError));
 }
 
 createTipoServicio(tipoServicio: any): Observable<any> {
-  return this.http.post('http://localhost:3000/api/servicios/tipos/create', tipoServicio, { headers: this.getHeaders() })
+  return this.http.post('http://api.ictlatam.com/api/servicios/tipos/create', tipoServicio, { headers: this.getHeaders() })
     .pipe(catchError(this.handleError));
 }
 
 updateTipoServicio(id: number, tipoServicio: any): Observable<any> {
-  return this.http.put(`http://localhost:3000/api/servicios/tipos/update/${id}`, tipoServicio, { headers: this.getHeaders() })
+  return this.http.put(`http://api.ictlatam.com/api/servicios/tipos/update/${id}`, tipoServicio, { headers: this.getHeaders() })
     .pipe(catchError(this.handleError));
 }
 
 deleteTipoServicio(id: number): Observable<any> {
-  return this.http.delete(`http://localhost:3000/api/servicios/tipos/delete/${id}`, { headers: this.getHeaders() })
+  return this.http.delete(`http://api.ictlatam.com/api/servicios/tipos/delete/${id}`, { headers: this.getHeaders() })
     .pipe(catchError(this.handleError));
 }
   
   // ===== ESTADOS =====
   
   getEstados(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/estados/all', { headers: this.getHeaders() })
+    return this.http.get<any[]>('http://api.ictlatam.com/api/estados/all', { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   createEstado(estado: any): Observable<any> {
-    return this.http.post('http://localhost:3000/api/estados/create', estado, { headers: this.getHeaders() })
+    return this.http.post('http://api.ictlatam.com/api/estados/create', estado, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   updateEstado(id: number, estado: any): Observable<any> {
-    return this.http.put(`http://localhost:3000/api/estados/update/${id}`, estado, { headers: this.getHeaders() })
+    return this.http.put(`http://api.ictlatam.com/api/estados/update/${id}`, estado, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   deleteEstado(id: number): Observable<any> {
-    return this.http.delete(`http://localhost:3000/api/estados/delete/${id}`, { headers: this.getHeaders() })
+    return this.http.delete(`http://api.ictlatam.com/api/estados/delete/${id}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   // ===== PLANES =====
 
   getPlanes(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/planes/all', { headers: this.getHeaders() })
+    return this.http.get<any[]>('http://api.ictlatam.com/api/planes/all', { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   // ===== SECTORES =====
 
   getSectores(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/sectores/all', { headers: this.getHeaders() })
+    return this.http.get<any[]>('http://api.ictlatam.com/api/sectores/all', { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   // ===== TARIFAS =====
 
   getTarifas(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:3000/api/tarifas/all', { headers: this.getHeaders() })
+    return this.http.get<any[]>('http://api.ictlatam.com/api/tarifas/all', { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
   
   // ===== PAGOS =====
   
   getPagosCliente(clienteID: number, ano?: number): Observable<any> {
-    let url = `http://localhost:3000/api/pagos/cliente/${clienteID}`;
+    let url = `http://api.ictlatam.com/api/pagos/cliente/${clienteID}`;
     if (ano) {
       url += `?ano=${ano}`;
     }
@@ -139,47 +140,47 @@ deleteTipoServicio(id: number): Observable<any> {
   }
   
   addPago(pago: any): Observable<any> {
-    return this.http.post(`http://localhost:3000/api/pagos/add`, pago, { headers: this.getHeaders() })
+    return this.http.post(`http://api.ictlatam.com/api/pagos/add`, pago, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   // ✅ NUEVO: Actualizar pago
   updatePago(id: number, pago: any): Observable<any> {
-    return this.http.put(`http://localhost:3000/api/pagos/update/${id}`, pago, { headers: this.getHeaders() })
+    return this.http.put(`http://api.ictlatam.com/api/pagos/update/${id}`, pago, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   // ✅ NUEVO: Eliminar pago
   deletePago(id: number): Observable<any> {
-    return this.http.delete(`http://localhost:3000/api/pagos/delete/${id}`, { headers: this.getHeaders() })
+    return this.http.delete(`http://api.ictlatam.com/api/pagos/delete/${id}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
   
   getMetodosPago(): Observable<any> {
-    return this.http.get(`http://localhost:3000/api/metodos-pago/all`, { headers: this.getHeaders() })
+    return this.http.get(`http://api.ictlatam.com/api/metodos-pago/all`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
   
   // ===== ESTADÍSTICAS Y DASHBOARD =====
   
   getDashboardStats(): Observable<any> {
-    return this.http.get(`http://localhost:3000/api/servicios/dashboard`, { headers: this.getHeaders() })
+    return this.http.get(`http://api.ictlatam.com/api/servicios/dashboard`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
   
   getMonthlyIncome(year: number): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/api/pagos/ingresos-mensuales?anio=${year}`, { headers: this.getHeaders() })
+    return this.http.get<any[]>(`http://api.ictlatam.com/api/pagos/ingresos-mensuales?anio=${year}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
   // ✅ NUEVO: Obtener ingresos esperados por mes
   getIngresosEsperados(year: number): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:3000/api/pagos/ingresos-esperados?anio=${year}`, { headers: this.getHeaders() })
+    return this.http.get<any[]>(`http://api.ictlatam.com/api/pagos/ingresos-esperados?anio=${year}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
   
   getTarifaByClienteId(clienteId: number): Observable<any> {
-    return this.http.get<any>(`http://localhost:3000/api/tarifas/cliente/${clienteId}`, { headers: this.getHeaders() })
+    return this.http.get<any>(`http://api.ictlatam.com/api/tarifas/cliente/${clienteId}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
@@ -200,7 +201,7 @@ deleteTipoServicio(id: number): Observable<any> {
   // ===== REPORTES =====
 
   exportClientesPagosExcel(ano: number): Observable<Blob> {
-    return this.http.get(`http://localhost:3000/api/pagos/reporte-clientes-pagos?ano=${ano}`, {
+    return this.http.get(`http://api.ictlatam.com/api/pagos/reporte-clientes-pagos?ano=${ano}`, {
       headers: this.getHeaders(),
       responseType: 'blob'
     }).pipe(catchError(this.handleError));

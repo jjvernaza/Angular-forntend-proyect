@@ -1,0 +1,116 @@
+/* ============================================
+   BASE
+   ============================================ */
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   TABLA
+   ============================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* ============================================
+   INPUT COLOR (picker)
+   ============================================ */
+.color-picker {
+  width: 2.75rem;
+  height: 2.5rem;
+  padding: 2px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+.color-picker:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ============================================
+   CODE (hex color)
+   ============================================ */
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  background-color: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #374151;
+}
+
+/* ============================================
+   INPUTS Y SELECTS (modal)
+   ============================================ */
+input[type="text"],
+select {
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+input[type="text"]:disabled,
+select:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   MEDIA QUERIES
+   ============================================ */
+
+/* Móvil (max 768px) */
+@media (max-width: 768px) {
+  button[type="submit"],
+  button[type="button"] {
+    width: 100%;
+  }
+}
+
+/* Móvil pequeño (max 480px) */
+@media (max-width: 480px) {
+  input[type="text"],
+  select {
+    font-size: 16px; /* Evita zoom en iOS */
+  }
+
+  code {
+    font-size: 0.7rem;
+  }
+}

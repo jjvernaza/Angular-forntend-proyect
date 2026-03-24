@@ -1,0 +1,97 @@
+/* ============================================
+   BASE
+   ============================================ */
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   INPUTS Y TEXTAREA
+   ============================================ */
+input[type="text"],
+textarea {
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+input[type="text"]:disabled,
+textarea:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+textarea { resize: none; }
+
+/* ============================================
+   TABLA
+   ============================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+.overflow-x-auto::-webkit-scrollbar { height: 6px; }
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ============================================
+   MEDIA QUERIES
+   ============================================ */
+
+/* Móvil (max 768px) */
+@media (max-width: 768px) {
+  button[type="submit"],
+  button[type="button"] {
+    width: 100%;
+  }
+}
+
+/* Móvil pequeño (max 480px) */
+@media (max-width: 480px) {
+  input[type="text"],
+  textarea {
+    font-size: 16px;
+  }
+}

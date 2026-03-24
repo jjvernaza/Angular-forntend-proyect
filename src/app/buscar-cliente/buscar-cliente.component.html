@@ -1,300 +1,357 @@
-<div class="p-6">
-  <h1 class="text-4xl font-bold mb-4">Buscar Clientes</h1>
+<div class="p-3 sm:p-6">
+  <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-gray-800">Buscar Clientes</h1>
 
-  <!-- ✅ Verificar permiso para ver clientes -->
-  <div *ngIf="!tienePermisoLeer" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+  <!-- Acceso Denegado -->
+  <div *ngIf="!tienePermisoLeer"
+       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
     <p class="font-bold">Acceso Denegado</p>
-    <p>No tienes permisos para ver clientes.</p>
+    <p class="text-sm">No tienes permisos para ver clientes.</p>
   </div>
 
-  <!-- Filtros de búsqueda -->  
-  <div *ngIf="tienePermisoLeer" class="flex items-center mb-4 space-x-2">
-    <input type="text" 
-           placeholder="Buscar por ID" 
-           [(ngModel)]="filtro.id" 
-           class="search-input"
-           [disabled]="!tienePermisoLeer">
-    <input type="text" 
-           placeholder="Buscar por nombre" 
-           [(ngModel)]="filtro.nombre" 
-           class="search-input"
-           [disabled]="!tienePermisoLeer">
-    <input type="text" 
-           placeholder="Buscar por apellido" 
-           [(ngModel)]="filtro.apellido" 
-           class="search-input"
-           [disabled]="!tienePermisoLeer">
-    <input type="text" 
-           placeholder="Buscar por cédula" 
-           [(ngModel)]="filtro.cedula" 
-           class="search-input"
-           [disabled]="!tienePermisoLeer">
-    <input type="text" 
-           placeholder="Buscar por teléfono" 
-           [(ngModel)]="filtro.telefono" 
-           class="search-input"
-           [disabled]="!tienePermisoLeer">
-    <input type="text" 
-           placeholder="Buscar por ubicación" 
-           [(ngModel)]="filtro.ubicacion" 
-           class="search-input"
-           [disabled]="!tienePermisoLeer">
-    
-    <!-- ✅ NUEVO: Dropdown de Estados -->
-    <select 
-      [(ngModel)]="filtro.estado" 
-      class="search-input"
-      [disabled]="!tienePermisoLeer">
-      <option value="">Todos los estados</option>
-      <option *ngFor="let estado of estados" [value]="estado.ID">
-        {{ estado.Estado }}
-      </option>
-    </select>
-    
-    <button class="btn-search" 
-            (click)="buscarClientes()"
-            [disabled]="!tienePermisoLeer">
-      <i class="fas fa-search"></i> Buscar
-    </button>
-    <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" 
-            (click)="limpiarFiltros()"
-            [disabled]="!tienePermisoLeer">
-      <i class="fas fa-eraser"></i> Limpiar Filtros
-    </button>
+  <!-- Filtros -->
+  <div *ngIf="tienePermisoLeer" class="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <input type="text" placeholder="Buscar por ID"
+             [(ngModel)]="filtro.id" class="search-input"
+             [disabled]="!tienePermisoLeer">
+      <input type="text" placeholder="Buscar por nombre"
+             [(ngModel)]="filtro.nombre" class="search-input"
+             [disabled]="!tienePermisoLeer">
+      <input type="text" placeholder="Buscar por apellido"
+             [(ngModel)]="filtro.apellido" class="search-input"
+             [disabled]="!tienePermisoLeer">
+      <input type="text" placeholder="Buscar por cédula"
+             [(ngModel)]="filtro.cedula" class="search-input"
+             [disabled]="!tienePermisoLeer">
+      <input type="text" placeholder="Buscar por teléfono"
+             [(ngModel)]="filtro.telefono" class="search-input"
+             [disabled]="!tienePermisoLeer">
+      <input type="text" placeholder="Buscar por ubicación"
+             [(ngModel)]="filtro.ubicacion" class="search-input"
+             [disabled]="!tienePermisoLeer">
+      <select [(ngModel)]="filtro.estado" class="search-input"
+              [disabled]="!tienePermisoLeer">
+        <option value="">Todos los estados</option>
+        <option *ngFor="let estado of estados" [value]="estado.ID">
+          {{ estado.Estado }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex flex-col sm:flex-row gap-2 mt-3">
+      <button class="btn-search w-full sm:w-auto"
+              (click)="buscarClientes()"
+              [disabled]="!tienePermisoLeer">
+        <i class="fas fa-search mr-1"></i> Buscar
+      </button>
+      <button class="btn-cancel w-full sm:w-auto"
+              (click)="limpiarFiltros()"
+              [disabled]="!tienePermisoLeer">
+        <i class="fas fa-eraser mr-1"></i> Limpiar Filtros
+      </button>
+    </div>
   </div>
 
-  <!-- Contador de resultados -->
-  <div *ngIf="tienePermisoLeer && clientes.length > 0" class="mb-3 text-gray-600">
+  <!-- Contador -->
+  <div *ngIf="tienePermisoLeer && clientes.length > 0"
+       class="mb-3 text-sm text-gray-600">
     <strong>{{ clientes.length }}</strong> cliente(s) encontrado(s)
   </div>
 
-  <!-- Tabla de clientes -->
-  <div *ngIf="tienePermisoLeer" class="table-container">
-    <table class="min-w-full bg-white border border-gray-200">
-      <thead>
-        <tr>
-          <th class="border border-gray-300 px-4 py-2">ID</th>
-          <th class="border border-gray-300 px-4 py-2">Nombre Completo</th>
-          <th class="border border-gray-300 px-4 py-2">Plan MB</th>
-          <th class="border border-gray-300 px-4 py-2">Fecha Instalación</th>
-          <th class="border border-gray-300 px-4 py-2">Tipo Servicio</th>
-          <th class="border border-gray-300 px-4 py-2">Tarifa</th>
-          <th class="border border-gray-300 px-4 py-2">Sector</th>
-          <th class="border border-gray-300 px-4 py-2">Dirección IP</th>
-          <th class="border border-gray-300 px-4 py-2">Teléfono</th>
-          <th class="border border-gray-300 px-4 py-2">Ubicación</th>
-          <th class="border border-gray-300 px-4 py-2">Cédula</th>
-          <th class="border border-gray-300 px-4 py-2">Estado</th>
-          <th class="border border-gray-300 px-4 py-2">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let cliente of clientes">
-          <td class="border border-gray-300 px-4 py-2">{{ cliente.ID }}</td>
-          <td class="border border-gray-300 px-4 py-2">
-            {{ cliente.NombreCliente }} {{ cliente.ApellidoCliente }}
-          </td>
-          <td class="border border-gray-300 px-4 py-2">
-            <span *ngIf="cliente.plan && cliente.plan.nombre; else noPlan">
-              {{ cliente.plan.nombre }}
-              <small class="text-gray-500 block">{{ cliente.plan.velocidad }}</small>
-            </span>
-            <ng-template #noPlan>
-              <span class="text-red-400">Sin plan</span>
-            </ng-template>
-          </td>
-          <td class="border border-gray-300 px-4 py-2">{{ cliente.FechaInstalacion | date:'dd/MM/yyyy' }}</td>
-          <td class="border border-gray-300 px-4 py-2">
-            <span *ngIf="cliente.tipoServicio && cliente.tipoServicio.Tipo; else noTipoServicio">
-              {{ cliente.tipoServicio.Tipo }}
-            </span>
-            <ng-template #noTipoServicio>
-              <span class="text-red-400">Sin tipo</span>
-            </ng-template>
-          </td>
-          <td class="border border-gray-300 px-4 py-2">
-            <span *ngIf="cliente.tarifa && cliente.tarifa.valor; else noTarifa" class="font-semibold text-green-600">
+  <!-- TABLA: md en adelante -->
+  <div *ngIf="tienePermisoLeer && clientes.length > 0">
+    <div class="hidden md:block overflow-x-auto rounded-lg shadow">
+      <table class="min-w-full bg-white border border-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">ID</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Nombre Completo</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Plan MB</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">F. Instalación</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Tipo Servicio</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Tarifa</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Sector</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">IP</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Teléfono</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Ubicación</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Cédula</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Estado</th>
+            <th class="border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cliente of clientes" class="hover:bg-gray-50 transition-colors">
+            <td class="border border-gray-200 px-3 py-2 text-sm">{{ cliente.ID }}</td>
+            <td class="border border-gray-200 px-3 py-2 text-sm font-medium">
+              {{ cliente.NombreCliente }} {{ cliente.ApellidoCliente }}
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">
+              <span *ngIf="cliente.plan?.nombre; else noPlan">
+                {{ cliente.plan.nombre }}
+                <small class="text-gray-400 block">{{ cliente.plan.velocidad }}</small>
+              </span>
+              <ng-template #noPlan><span class="text-red-400 text-xs">Sin plan</span></ng-template>
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">
+              {{ cliente.FechaInstalacion | date:'dd/MM/yyyy' }}
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">
+              <span *ngIf="cliente.tipoServicio?.Tipo; else noTipo">{{ cliente.tipoServicio.Tipo }}</span>
+              <ng-template #noTipo><span class="text-red-400 text-xs">Sin tipo</span></ng-template>
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">
+              <span *ngIf="cliente.tarifa?.valor; else noTarifa"
+                    class="font-semibold text-green-600">
+                ${{ cliente.tarifa.valor | number:'1.0-0' }}
+              </span>
+              <ng-template #noTarifa><span class="text-red-400 text-xs">Sin tarifa</span></ng-template>
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">
+              <span *ngIf="cliente.sector; else noSector">{{ cliente.sector.nombre }}</span>
+              <ng-template #noSector><span class="text-gray-400 text-xs">Sin sector</span></ng-template>
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-sm font-mono">{{ cliente.IPAddress }}</td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">{{ cliente.Telefono }}</td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">{{ cliente.Ubicacion }}</td>
+            <td class="border border-gray-200 px-3 py-2 text-sm">{{ cliente.Cedula }}</td>
+            <td class="border border-gray-200 px-3 py-2">
+              <span *ngIf="cliente.estado?.Estado; else noEstado"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                    [style.background-color]="cliente.estado.Color || getEstadoColorByName(cliente.estado.Estado)"
+                    [style.color]="getTextColorForBg(cliente.estado.Color || getEstadoColorByName(cliente.estado.Estado))">
+                {{ cliente.estado.Estado }}
+              </span>
+              <ng-template #noEstado><span class="text-gray-400 text-xs">Sin estado</span></ng-template>
+            </td>
+            <td class="border border-gray-200 px-3 py-2 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button *ngIf="tienePermisoActualizar"
+                        (click)="abrirModalEditar(cliente)"
+                        class="text-blue-500 hover:text-blue-700 transition-colors"
+                        title="Editar cliente">
+                  <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button *ngIf="!tienePermisoActualizar"
+                        (click)="mostrarMensajePermisos('editar')"
+                        class="text-gray-300 cursor-not-allowed"
+                        title="Sin permiso para editar">
+                  <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button *ngIf="tienePermisoEliminar"
+                        (click)="abrirModalEliminar(cliente.ID)"
+                        class="text-red-500 hover:text-red-700 transition-colors"
+                        title="Eliminar cliente">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+                <button *ngIf="!tienePermisoEliminar"
+                        (click)="mostrarMensajePermisos('eliminar')"
+                        class="text-gray-300 cursor-not-allowed"
+                        title="Sin permiso para eliminar">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CARDS: solo móvil -->
+    <div class="md:hidden space-y-3">
+      <div *ngFor="let cliente of clientes"
+           class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+
+        <!-- Cabecera -->
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <p class="font-semibold text-gray-900 text-sm">
+              {{ cliente.NombreCliente }} {{ cliente.ApellidoCliente }}
+            </p>
+            <p class="text-xs text-gray-500">ID: {{ cliente.ID }} · {{ cliente.Cedula }}</p>
+          </div>
+          <span *ngIf="cliente.estado?.Estado"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+                [style.background-color]="cliente.estado.Color || getEstadoColorByName(cliente.estado.Estado)"
+                [style.color]="getTextColorForBg(cliente.estado.Color || getEstadoColorByName(cliente.estado.Estado))">
+            {{ cliente.estado.Estado }}
+          </span>
+        </div>
+
+        <!-- Datos -->
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 mb-3">
+          <div>
+            <span class="font-semibold text-gray-700">Plan:</span>
+            {{ cliente.plan?.nombre || 'Sin plan' }}
+            <small *ngIf="cliente.plan?.velocidad" class="text-gray-400 block">{{ cliente.plan.velocidad }}</small>
+          </div>
+          <div>
+            <span class="font-semibold text-gray-700">Tarifa:</span>
+            <span *ngIf="cliente.tarifa?.valor" class="text-green-600 font-semibold">
               ${{ cliente.tarifa.valor | number:'1.0-0' }}
             </span>
-            <ng-template #noTarifa>
-              <span class="text-red-400">Sin tarifa</span>
-            </ng-template>
-          </td>
-          <td class="border border-gray-300 px-4 py-2">
-            <span *ngIf="cliente.sector; else noSector">
-              {{ cliente.sector.nombre }}
-            </span>
-            <ng-template #noSector>
-              <span class="text-gray-400">Sin sector</span>
-            </ng-template>
-          </td>
-          <td class="border border-gray-300 px-4 py-2">{{ cliente.IPAddress }}</td>
-          <td class="border border-gray-300 px-4 py-2">{{ cliente.Telefono }}</td>
-          <td class="border border-gray-300 px-4 py-2">{{ cliente.Ubicacion }}</td>
-          <td class="border border-gray-300 px-4 py-2">{{ cliente.Cedula }}</td>
-          <td class="border border-gray-300 px-4 py-2">
-            <span *ngIf="cliente.estado && cliente.estado.Estado; else noEstado" 
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  [style.background-color]="cliente.estado.Color || getEstadoColorByName(cliente.estado.Estado)"
-                  [style.color]="getTextColorForBg(cliente.estado.Color || getEstadoColorByName(cliente.estado.Estado))">
-              {{ cliente.estado.Estado }}
-            </span>
-            <ng-template #noEstado>
-              <span class="text-gray-400">Sin estado</span>
-            </ng-template>
-          </td>
-          <td class="border border-gray-300 px-4 py-2 text-center">
-            <!-- ✅ Botón Editar - Solo visible si tiene permiso -->
-            <button *ngIf="tienePermisoActualizar"
-                    (click)="abrirModalEditar(cliente)" 
-                    class="text-blue-500 mr-2 hover:text-blue-700"
-                    title="Editar cliente">
-              <i class="fas fa-pencil-alt"></i>
-            </button>
-            
-            <!-- ⚠️ Botón Editar deshabilitado si NO tiene permiso -->
-            <button *ngIf="!tienePermisoActualizar"
-                    (click)="mostrarMensajePermisos('editar')"
-                    class="text-gray-400 mr-2 cursor-not-allowed opacity-50"
-                    title="No tienes permiso para editar">
-              <i class="fas fa-pencil-alt"></i>
-            </button>
-            
-            <!-- ✅ Botón Eliminar - Solo visible si tiene permiso -->
-            <button *ngIf="tienePermisoEliminar"
-                    (click)="abrirModalEliminar(cliente.ID)" 
-                    class="text-red-500 hover:text-red-700"
-                    title="Eliminar cliente">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-            
-            <!-- ⚠️ Botón Eliminar deshabilitado si NO tiene permiso -->
-            <button *ngIf="!tienePermisoEliminar"
-                    (click)="mostrarMensajePermisos('eliminar')"
-                    class="text-gray-400 cursor-not-allowed opacity-50"
-                    title="No tienes permiso para eliminar">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <span *ngIf="!cliente.tarifa?.valor" class="text-red-400">Sin tarifa</span>
+          </div>
+          <div><span class="font-semibold text-gray-700">Teléfono:</span> {{ cliente.Telefono }}</div>
+          <div><span class="font-semibold text-gray-700">Sector:</span> {{ cliente.sector?.nombre || 'Sin sector' }}</div>
+          <div><span class="font-semibold text-gray-700">IP:</span> <span class="font-mono">{{ cliente.IPAddress }}</span></div>
+          <div><span class="font-semibold text-gray-700">Servicio:</span> {{ cliente.tipoServicio?.Tipo || 'Sin tipo' }}</div>
+          <div><span class="font-semibold text-gray-700">F. Inst.:</span> {{ cliente.FechaInstalacion | date:'dd/MM/yyyy' }}</div>
+          <div class="col-span-2"><span class="font-semibold text-gray-700">Ubicación:</span> {{ cliente.Ubicacion }}</div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex gap-2 pt-2 border-t border-gray-100">
+          <button *ngIf="tienePermisoActualizar"
+                  (click)="abrirModalEditar(cliente)"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-blue-600 hover:text-blue-800 py-1.5 rounded hover:bg-blue-50 transition-colors">
+            <i class="fas fa-pencil-alt"></i> Editar
+          </button>
+          <button *ngIf="!tienePermisoActualizar"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-gray-300 py-1.5 rounded cursor-not-allowed">
+            <i class="fas fa-pencil-alt"></i> Editar
+          </button>
+          <button *ngIf="tienePermisoEliminar"
+                  (click)="abrirModalEliminar(cliente.ID)"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-red-600 hover:text-red-800 py-1.5 rounded hover:bg-red-50 transition-colors">
+            <i class="fas fa-trash-alt"></i> Eliminar
+          </button>
+          <button *ngIf="!tienePermisoEliminar"
+                  class="flex-1 flex items-center justify-center gap-1 text-xs text-gray-300 py-1.5 rounded cursor-not-allowed">
+            <i class="fas fa-trash-alt"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Mensaje cuando no hay resultados -->
-  <div *ngIf="tienePermisoLeer && clientes.length === 0" class="text-center py-8 text-gray-500">
-    <i class="fas fa-search text-4xl mb-3"></i>
-    <p class="text-lg">No se encontraron clientes con los criterios de búsqueda.</p>
+  <!-- Sin resultados -->
+  <div *ngIf="tienePermisoLeer && clientes.length === 0"
+       class="text-center py-8 text-gray-500">
+    <i class="fas fa-search text-3xl sm:text-4xl mb-3 block"></i>
+    <p class="text-base sm:text-lg">No se encontraron clientes con los criterios de búsqueda.</p>
   </div>
 </div>
 
-<!-- Modal de edición -->
-<div *ngIf="modalEditar && tienePermisoActualizar" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-  <div class="bg-white p-6 rounded shadow-lg w-2/3 max-h-screen overflow-y-auto">
-    <h2 class="text-2xl font-bold mb-4">Editar Cliente</h2>
+<!-- ==================== MODALES ==================== -->
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block font-semibold mb-1">Nombre Cliente</label>
-        <input type="text" [(ngModel)]="clienteEdit.NombreCliente" class="border p-2 w-full mb-3">
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Apellido Cliente</label>
-        <input type="text" [(ngModel)]="clienteEdit.ApellidoCliente" class="border p-2 w-full mb-3">
-      </div>
+<!-- Modal Editar -->
+<div *ngIf="modalEditar && tienePermisoActualizar"
+     class="fixed inset-0 flex items-end sm:items-center justify-center bg-black bg-opacity-50 z-50 p-0 sm:p-4">
+  <div class="bg-white w-full sm:w-2/3 sm:max-w-3xl rounded-t-2xl sm:rounded-lg shadow-lg max-h-[92vh] overflow-y-auto">
+
+    <div class="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+      <h2 class="text-lg sm:text-2xl font-bold text-gray-800">Editar Cliente</h2>
+      <button (click)="modalEditar = false" class="text-gray-400 hover:text-gray-700 p-1">
+        <i class="fas fa-times text-xl"></i>
+      </button>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block font-semibold mb-1">Plan MB</label>
-        <select [(ngModel)]="clienteEdit.plan_mb_id" class="border p-2 w-full mb-3">
-          <option value="">Seleccionar Plan</option>
-          <option *ngFor="let plan of planes" [value]="plan.id">
-            {{ plan.nombre }} - {{ plan.velocidad }}
-          </option>
-        </select>
+    <div class="p-4 sm:p-6 space-y-4">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Nombre Cliente</label>
+          <input type="text" [(ngModel)]="clienteEdit.NombreCliente" class="input-field">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Apellido Cliente</label>
+          <input type="text" [(ngModel)]="clienteEdit.ApellidoCliente" class="input-field">
+        </div>
       </div>
-      <div>
-        <label class="block font-semibold mb-1">Fecha Instalación</label>
-        <input type="date" [(ngModel)]="clienteEdit.FechaInstalacion" class="border p-2 w-full mb-3">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Plan MB</label>
+          <select [(ngModel)]="clienteEdit.plan_mb_id" class="input-field">
+            <option value="">Seleccionar Plan</option>
+            <option *ngFor="let plan of planes" [value]="plan.id">
+              {{ plan.nombre }} - {{ plan.velocidad }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Fecha Instalación</label>
+          <input type="date" [(ngModel)]="clienteEdit.FechaInstalacion" class="input-field">
+        </div>
       </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Tipo de Servicio</label>
+          <select [(ngModel)]="clienteEdit.TipoServicioID" class="input-field">
+            <option value="">Seleccionar Tipo</option>
+            <option *ngFor="let tipo of tiposServicio" [value]="tipo.ID">{{ tipo.Tipo }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Tarifa</label>
+          <select [(ngModel)]="clienteEdit.tarifa_id" class="input-field">
+            <option value="">Seleccionar Tarifa</option>
+            <option *ngFor="let tarifa of tarifas" [value]="tarifa.id">${{ tarifa.valor }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Sector</label>
+          <select [(ngModel)]="clienteEdit.sector_id" class="input-field">
+            <option value="">Seleccionar Sector</option>
+            <option *ngFor="let sector of sectores" [value]="sector.id">{{ sector.nombre }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Estado</label>
+          <select [(ngModel)]="clienteEdit.EstadoID" class="input-field">
+            <option value="">Seleccionar Estado</option>
+            <option *ngFor="let estado of estados" [value]="estado.ID">{{ estado.Estado }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Dirección IP</label>
+          <input type="text" [(ngModel)]="clienteEdit.IPAddress" class="input-field">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Teléfono</label>
+          <input type="text" [(ngModel)]="clienteEdit.Telefono" class="input-field">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1 text-sm">Cédula</label>
+          <input type="text" [(ngModel)]="clienteEdit.Cedula" class="input-field">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1 text-sm">Ubicación</label>
+        <input type="text" [(ngModel)]="clienteEdit.Ubicacion" class="input-field">
+      </div>
+
     </div>
 
-    <div class="grid grid-cols-3 gap-3">
-      <div>
-        <label class="block font-semibold mb-1">Tipo de Servicio</label>
-        <select [(ngModel)]="clienteEdit.TipoServicioID" class="border p-2 w-full mb-3">
-          <option value="">Seleccionar Tipo</option>
-          <option *ngFor="let tipo of tiposServicio" [value]="tipo.ID">
-            {{ tipo.Tipo }}
-          </option>
-        </select>        
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Tarifa</label>
-        <select [(ngModel)]="clienteEdit.tarifa_id" class="border p-2 w-full mb-3">
-          <option value="">Seleccionar Tarifa</option>
-          <option *ngFor="let tarifa of tarifas" [value]="tarifa.id">
-            ${{ tarifa.valor }}
-          </option>
-        </select>
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Sector</label>
-        <select [(ngModel)]="clienteEdit.sector_id" class="border p-2 w-full mb-3">
-          <option value="">Seleccionar Sector</option>
-          <option *ngFor="let sector of sectores" [value]="sector.id">
-            {{ sector.nombre }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block font-semibold mb-1">Estado</label>
-        <select [(ngModel)]="clienteEdit.EstadoID" class="border p-2 w-full mb-3">
-          <option value="">Seleccionar Estado</option>
-          <option *ngFor="let estado of estados" [value]="estado.ID">
-            {{ estado.Estado }}
-          </option>
-        </select>
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Dirección IP</label>
-        <input type="text" [(ngModel)]="clienteEdit.IPAddress" class="border p-2 w-full mb-3">
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block font-semibold mb-1">Teléfono</label>
-        <input type="text" [(ngModel)]="clienteEdit.Telefono" class="border p-2 w-full mb-3">
-      </div>
-      <div>
-        <label class="block font-semibold mb-1">Cédula</label>
-        <input type="text" [(ngModel)]="clienteEdit.Cedula" class="border p-2 w-full mb-3">
-      </div>
-    </div>
-
-    <label class="block font-semibold mb-1">Ubicación</label>
-    <input type="text" [(ngModel)]="clienteEdit.Ubicacion" class="border p-2 w-full mb-3">
-
-    <div class="flex justify-end mt-4 space-x-2">
-      <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600" (click)="guardarEdicion()">Guardar</button>
-      <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" (click)="modalEditar = false">Cancelar</button>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200">
+      <button class="btn-cancel w-full sm:w-auto" (click)="modalEditar = false">Cancelar</button>
+      <button class="btn-save w-full sm:w-auto" (click)="guardarEdicion()">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal de eliminación -->
-<div *ngIf="modalEliminar && tienePermisoEliminar" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-  <div class="bg-white p-6 rounded shadow-lg w-1/3">
-    <h2 class="text-2xl font-bold mb-4">¿Eliminar este cliente?</h2>
-    <p class="text-gray-600 mb-4">Esta acción no se puede deshacer.</p>
-    <div class="flex justify-end space-x-2">
-      <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" (click)="eliminarCliente()">Eliminar</button>
-      <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" (click)="modalEliminar = false">Cancelar</button>
+<!-- Modal Eliminar -->
+<div *ngIf="modalEliminar && tienePermisoEliminar"
+     class="fixed inset-0 flex items-end sm:items-center justify-center bg-black bg-opacity-50 z-50 p-0 sm:p-4">
+  <div class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-lg shadow-lg">
+    <div class="p-4 sm:p-6 border-b border-gray-200">
+      <h2 class="text-lg sm:text-xl font-bold text-red-600">¿Eliminar este cliente?</h2>
+    </div>
+    <div class="p-4 sm:p-6">
+      <p class="text-sm text-gray-600">Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200">
+      <button class="btn-cancel w-full sm:w-auto" (click)="modalEliminar = false">Cancelar</button>
+      <button class="btn-delete w-full sm:w-auto" (click)="eliminarCliente()">Eliminar</button>
     </div>
   </div>
 </div>

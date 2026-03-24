@@ -1,233 +1,227 @@
-<div class="flex">
-  <aside class="h-screen bg-gray-800 text-white w-64 fixed top-0 left-0 overflow-y-auto">
-    <div class="p-4 border-b border-gray-700">
-      <h2 class="text-center text-2xl font-bold">VOZIP COMPANY</h2>
-    </div>
-    
-    <nav class="mt-6">
-      <!-- PRINCIPAL -->
-      <div class="px-4 mb-2 text-xs uppercase tracking-wider text-gray-400">
-        Principal
-      </div>
-      <ul>
-        <li>
-          <a [routerLink]="tieneAlgunoDeEstosPermisos(['dashboard.ver']) ? '/dashboard' : null"
-             (click)="verificarPermiso($event, ['dashboard.ver'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['dashboard.ver'])"
-             [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['dashboard.ver'])"
-             [class.cursor-pointer]="tieneAlgunoDeEstosPermisos(['dashboard.ver'])"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-tachometer-alt w-5"></i>
-            <span>Dashboard</span>
-          </a>
-        </li>
-      </ul>
-      
-      <!-- CLIENTES -->
-      <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">
-        Clientes
-      </div>
-      <ul>
-        <li>
-          <a [routerLink]="tieneAlgunoDeEstosPermisos(['clientes.leer', 'clientes.buscar_avanzado']) ? '/buscar-cliente' : null"
-             (click)="verificarPermiso($event, ['clientes.leer', 'clientes.buscar_avanzado'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['clientes.leer', 'clientes.buscar_avanzado'])"
-             [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['clientes.leer', 'clientes.buscar_avanzado'])"
-             [class.cursor-pointer]="tieneAlgunoDeEstosPermisos(['clientes.leer', 'clientes.buscar_avanzado'])"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-search w-5"></i>
-            <span>Buscar Cliente</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('clientes.crear') ? '/agregar-cliente' : null"
-             (click)="verificarPermiso($event, ['clientes.crear'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('clientes.crear')"
-             [class.cursor-not-allowed]="!tienePermiso('clientes.crear')"
-             [class.cursor-pointer]="tienePermiso('clientes.crear')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-user-plus w-5"></i>
-            <span>Agregar Cliente</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tieneAlgunoDeEstosPermisos(['morosos.ver', 'morosos.filtrar', 'morosos.exportar', 'morosos.gestionar']) ? '/morosos' : null"
-             (click)="verificarPermiso($event, ['morosos.ver', 'morosos.filtrar', 'morosos.exportar', 'morosos.gestionar'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['morosos.ver', 'morosos.filtrar', 'morosos.exportar', 'morosos.gestionar'])"
-             [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['morosos.ver', 'morosos.filtrar', 'morosos.exportar', 'morosos.gestionar'])"
-             [class.cursor-pointer]="tieneAlgunoDeEstosPermisos(['morosos.ver', 'morosos.filtrar', 'morosos.exportar', 'morosos.gestionar'])"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-exclamation-triangle w-5"></i>
-            <span>Clientes Morosos</span>
-          </a>
-        </li>
-      </ul>
-      
-      <!-- PAGOS -->
-      <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">
-        Pagos
-      </div>
-      <ul>
-        <li>
-          <a [routerLink]="tieneAlgunoDeEstosPermisos(['pagos.crear', 'pagos.leer']) ? '/agregar-pago' : null"
-             (click)="verificarPermiso($event, ['pagos.crear', 'pagos.leer'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['pagos.crear', 'pagos.leer'])"
-             [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['pagos.crear', 'pagos.leer'])"
-             [class.cursor-pointer]="tieneAlgunoDeEstosPermisos(['pagos.crear', 'pagos.leer'])"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-money-bill-wave w-5"></i>
-            <span>Registrar Pago</span>
-          </a>
-        </li>
-      </ul>
-      
-      <!-- ADMINISTRACIÓN -->
-      <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">
-        Administración
-      </div>
-      <ul>
-        <li>
-          <a [routerLink]="tienePermiso('usuarios.leer') ? '/administrar-usuarios' : null"
-            (click)="verificarPermiso($event, ['usuarios.leer'])"
-            routerLinkActive="bg-gray-700"
-            [class.opacity-50]="!tienePermiso('usuarios.leer')"
-            [class.cursor-not-allowed]="!tienePermiso('usuarios.leer')"
-            [class.cursor-pointer]="tienePermiso('usuarios.leer')"
-            class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-users-cog w-5"></i>
-            <span>Administrar Usuarios</span>
-          </a>
-        </li>
-        <li>
-          <a [routerLink]="tienePermiso('usuarios.crear') ? '/crear-usuario' : null"
-             (click)="verificarPermiso($event, ['usuarios.crear'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('usuarios.crear')"
-             [class.cursor-not-allowed]="!tienePermiso('usuarios.crear')"
-             [class.cursor-pointer]="tienePermiso('usuarios.crear')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-user-shield w-5"></i>
-            <span>Crear Usuario</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('planes.leer') ? '/planes' : null"
-             (click)="verificarPermiso($event, ['planes.leer'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('planes.leer')"
-             [class.cursor-not-allowed]="!tienePermiso('planes.leer')"
-             [class.cursor-pointer]="tienePermiso('planes.leer')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-network-wired w-5"></i>
-            <span>Planes</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('sectores.leer') ? '/sectores' : null"
-             (click)="verificarPermiso($event, ['sectores.leer'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('sectores.leer')"
-             [class.cursor-not-allowed]="!tienePermiso('sectores.leer')"
-             [class.cursor-pointer]="tienePermiso('sectores.leer')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-map-marker-alt w-5"></i>
-            <span>Sectores</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('tarifas.leer') ? '/tarifas' : null"
-             (click)="verificarPermiso($event, ['tarifas.leer'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('tarifas.leer')"
-             [class.cursor-not-allowed]="!tienePermiso('tarifas.leer')"
-             [class.cursor-pointer]="tienePermiso('tarifas.leer')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-dollar-sign w-5"></i>
-            <span>Tarifas</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('servicios.leer') ? '/tipos-servicio' : null"
-             (click)="verificarPermiso($event, ['servicios.leer'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('servicios.leer')"
-             [class.cursor-not-allowed]="!tienePermiso('servicios.leer')"
-             [class.cursor-pointer]="tienePermiso('servicios.leer')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-cogs w-5"></i>
-            <span>Tipos de Servicio</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('estados.leer') ? '/estados' : null"
-             (click)="verificarPermiso($event, ['estados.leer'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('estados.leer')"
-             [class.cursor-not-allowed]="!tienePermiso('estados.leer')"
-             [class.cursor-pointer]="tienePermiso('estados.leer')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-flag w-5"></i>
-            <span>Estados</span>
-          </a>
-        </li>
-        
-        <li>
-          <a [routerLink]="tienePermiso('usuarios.asignar_permisos') ? '/permisos' : null"
-             (click)="verificarPermiso($event, ['usuarios.asignar_permisos'])"
-             routerLinkActive="bg-gray-700"
-             [class.opacity-50]="!tienePermiso('usuarios.asignar_permisos')"
-             [class.cursor-not-allowed]="!tienePermiso('usuarios.asignar_permisos')"
-             [class.cursor-pointer]="tienePermiso('usuarios.asignar_permisos')"
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-key w-5"></i>
-            <span>Permisos</span>
-          </a>
-        </li>
-        <li>
-          <a [routerLink]="tienePermiso('bitacora.leer') ? '/bitacora' : null"
-          (click)="verificarPermiso($event, ['bitacora.leer'])"
-          routerLinkActive="bg-gray-700"
-          [class.opacity-50]="!tienePermiso('bitacora.leer')"
-          [class.cursor-not-allowed]="!tienePermiso('bitacora.leer')"
-          [class.cursor-pointer]="tienePermiso('bitacora.leer')"
-          class="py-2 px-4 flex items-center space-x-2 hover:bg-gray-700 rounded-md transition-colors duration-150">
-            <i class="fas fa-clipboard-list w-5"></i>
-            <span>Bitácora</span>
-          </a>
-        </li>
-      </ul>
+<!-- Botón hamburger (solo móvil) -->
+<button
+  (click)="toggleSidebar()"
+  class="fixed top-4 left-4 z-50 md:hidden bg-gray-800 text-white p-2 rounded-md shadow-lg">
+  <i [ngClass]="sidebarAbierto ? 'fas fa-times text-xl' : 'fas fa-bars text-xl'"></i>
+</button>
 
-      <!-- SESIÓN -->
-      <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">
-        Sesión
-      </div>
-      <ul>
-        <li>
-          <a (click)="cerrarSesion()" 
-             class="py-2 px-4 flex items-center space-x-2 hover:bg-red-600 rounded-md transition-colors duration-150 cursor-pointer">
-            <i class="fas fa-sign-out-alt w-5"></i>
-            <span>Cerrar Sesión</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-    
-    <div class="mt-auto p-4 text-center text-sm text-gray-400 border-t border-gray-700">
-      <p>Vozip Company v2.0</p>
-      <p>{{ currentYear }}</p>
-      <p class="text-xs mt-2" *ngIf="userName">{{ userName }}</p>
-    </div>
-  </aside>
+<!-- Overlay oscuro (solo móvil cuando está abierto) -->
+<div
+  *ngIf="sidebarAbierto"
+  (click)="cerrarSidebar()"
+  class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden">
 </div>
+
+<!-- Sidebar -->
+<aside [ngClass]="sidebarAbierto ? 'translate-x-0' : '-translate-x-full'"
+       class="sidebar fixed top-0 left-0 h-screen bg-gray-800 text-white w-64 z-40 flex flex-col
+              transition-transform duration-300 ease-in-out
+              md:translate-x-0">
+
+  <!-- Header -->
+  <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+    <h2 class="text-xl font-bold">VOZIP COMPANY</h2>
+    <button (click)="cerrarSidebar()" class="md:hidden text-gray-400 hover:text-white p-1">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Nav scrollable -->
+  <nav class="flex-1 overflow-y-auto mt-4 pb-4">
+
+    <!-- PRINCIPAL -->
+    <div class="px-4 mb-2 text-xs uppercase tracking-wider text-gray-400">Principal</div>
+    <ul>
+      <li>
+        <a [routerLink]="tieneAlgunoDeEstosPermisos(['dashboard.ver']) ? '/dashboard' : null"
+           (click)="onNavClick($event, ['dashboard.ver'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['dashboard.ver'])"
+           [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['dashboard.ver'])"
+           class="nav-link">
+          <i class="fas fa-tachometer-alt w-5 flex-shrink-0"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- CLIENTES -->
+    <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">Clientes</div>
+    <ul>
+      <li>
+        <a [routerLink]="tieneAlgunoDeEstosPermisos(['clientes.leer','clientes.buscar_avanzado']) ? '/buscar-cliente' : null"
+           (click)="onNavClick($event, ['clientes.leer','clientes.buscar_avanzado'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['clientes.leer','clientes.buscar_avanzado'])"
+           [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['clientes.leer','clientes.buscar_avanzado'])"
+           class="nav-link">
+          <i class="fas fa-search w-5 flex-shrink-0"></i>
+          <span>Buscar Cliente</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('clientes.crear') ? '/agregar-cliente' : null"
+           (click)="onNavClick($event, ['clientes.crear'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('clientes.crear')"
+           [class.cursor-not-allowed]="!tienePermiso('clientes.crear')"
+           class="nav-link">
+          <i class="fas fa-user-plus w-5 flex-shrink-0"></i>
+          <span>Agregar Cliente</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tieneAlgunoDeEstosPermisos(['morosos.ver','morosos.filtrar','morosos.exportar','morosos.gestionar']) ? '/morosos' : null"
+           (click)="onNavClick($event, ['morosos.ver','morosos.filtrar','morosos.exportar','morosos.gestionar'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['morosos.ver','morosos.filtrar','morosos.exportar','morosos.gestionar'])"
+           [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['morosos.ver','morosos.filtrar','morosos.exportar','morosos.gestionar'])"
+           class="nav-link">
+          <i class="fas fa-exclamation-triangle w-5 flex-shrink-0"></i>
+          <span>Clientes Morosos</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- PAGOS -->
+    <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">Pagos</div>
+    <ul>
+      <li>
+        <a [routerLink]="tieneAlgunoDeEstosPermisos(['pagos.crear','pagos.leer']) ? '/agregar-pago' : null"
+           (click)="onNavClick($event, ['pagos.crear','pagos.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tieneAlgunoDeEstosPermisos(['pagos.crear','pagos.leer'])"
+           [class.cursor-not-allowed]="!tieneAlgunoDeEstosPermisos(['pagos.crear','pagos.leer'])"
+           class="nav-link">
+          <i class="fas fa-money-bill-wave w-5 flex-shrink-0"></i>
+          <span>Registrar Pago</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- ADMINISTRACIÓN -->
+    <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">Administración</div>
+    <ul>
+      <li>
+        <a [routerLink]="tienePermiso('usuarios.leer') ? '/administrar-usuarios' : null"
+           (click)="onNavClick($event, ['usuarios.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('usuarios.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('usuarios.leer')"
+           class="nav-link">
+          <i class="fas fa-users-cog w-5 flex-shrink-0"></i>
+          <span>Administrar Usuarios</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('usuarios.crear') ? '/crear-usuario' : null"
+           (click)="onNavClick($event, ['usuarios.crear'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('usuarios.crear')"
+           [class.cursor-not-allowed]="!tienePermiso('usuarios.crear')"
+           class="nav-link">
+          <i class="fas fa-user-shield w-5 flex-shrink-0"></i>
+          <span>Crear Usuario</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('planes.leer') ? '/planes' : null"
+           (click)="onNavClick($event, ['planes.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('planes.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('planes.leer')"
+           class="nav-link">
+          <i class="fas fa-network-wired w-5 flex-shrink-0"></i>
+          <span>Planes</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('sectores.leer') ? '/sectores' : null"
+           (click)="onNavClick($event, ['sectores.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('sectores.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('sectores.leer')"
+           class="nav-link">
+          <i class="fas fa-map-marker-alt w-5 flex-shrink-0"></i>
+          <span>Sectores</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('tarifas.leer') ? '/tarifas' : null"
+           (click)="onNavClick($event, ['tarifas.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('tarifas.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('tarifas.leer')"
+           class="nav-link">
+          <i class="fas fa-dollar-sign w-5 flex-shrink-0"></i>
+          <span>Tarifas</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('servicios.leer') ? '/tipos-servicio' : null"
+           (click)="onNavClick($event, ['servicios.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('servicios.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('servicios.leer')"
+           class="nav-link">
+          <i class="fas fa-cogs w-5 flex-shrink-0"></i>
+          <span>Tipos de Servicio</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('estados.leer') ? '/estados' : null"
+           (click)="onNavClick($event, ['estados.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('estados.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('estados.leer')"
+           class="nav-link">
+          <i class="fas fa-flag w-5 flex-shrink-0"></i>
+          <span>Estados</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('usuarios.asignar_permisos') ? '/permisos' : null"
+           (click)="onNavClick($event, ['usuarios.asignar_permisos'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('usuarios.asignar_permisos')"
+           [class.cursor-not-allowed]="!tienePermiso('usuarios.asignar_permisos')"
+           class="nav-link">
+          <i class="fas fa-key w-5 flex-shrink-0"></i>
+          <span>Permisos</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="tienePermiso('bitacora.leer') ? '/bitacora' : null"
+           (click)="onNavClick($event, ['bitacora.leer'])"
+           routerLinkActive="bg-gray-700"
+           [class.opacity-50]="!tienePermiso('bitacora.leer')"
+           [class.cursor-not-allowed]="!tienePermiso('bitacora.leer')"
+           class="nav-link">
+          <i class="fas fa-clipboard-list w-5 flex-shrink-0"></i>
+          <span>Bitácora</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- SESIÓN -->
+    <div class="px-4 pt-5 mb-2 text-xs uppercase tracking-wider text-gray-400">Sesión</div>
+    <ul>
+      <li>
+        <a (click)="cerrarSesion()"
+           class="nav-link hover:bg-red-600 cursor-pointer">
+          <i class="fas fa-sign-out-alt w-5 flex-shrink-0"></i>
+          <span>Cerrar Sesión</span>
+        </a>
+      </li>
+    </ul>
+
+  </nav>
+
+  <!-- Footer -->
+  <div class="p-4 text-center text-xs text-gray-400 border-t border-gray-700 flex-shrink-0">
+    <p class="font-medium">Vozip Company v2.0</p>
+    <p>{{ currentYear }}</p>
+    <p *ngIf="userName" class="mt-1 truncate">{{ userName }}</p>
+  </div>
+
+</aside>
